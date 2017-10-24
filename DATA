@@ -1,0 +1,28 @@
+TRAFFIC EN ILS DE FRANCE
+
+
+données de RATP sur l'usage par jour pour chaque ligne
+	-> geolocalision des données
+	-> données sur les travaux , fermeture de ligne
+
+
+	https://data.iledefrance.fr/explore/dataset/voyageurs-montant-en-gare-sur-le-reseau-transilien/
+
+données du trafic en ils de france
+	-> geolocalision des données
+	->données sur les travaux , fermeture de route (noctune ...)
+
+	https://opendata.paris.fr/
+	
+données des evenements majeurs
+	-> date , heure et lieux
+		manifestation , fete , tres gros evenement
+
+données des meteos
+	-> temperature , pluit , neige , forte chaleur
+	
+
+Etablir des models
+	pour prevoir le traffic a court terme ( amorti les donées du temps reel )
+
+	prevoir le traffic a long terme ( attribué une couleur a un jour donné )
