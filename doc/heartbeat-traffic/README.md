@@ -1,9 +1,11 @@
-#to use project 
+# Who use project 
 
 https://github.com/astyonax/heartbeat-traffic#or-the-heartbeat-of-paris
 
-##install :
+## Install :
 
+	sudo pip install ipython
+	sudo pip3 install ipython
 	sudo pip install tqdm
 	sudo pip3 install tqdm
 	sudo python -m pip install pandas
@@ -13,3 +15,7 @@ https://github.com/astyonax/heartbeat-traffic#or-the-heartbeat-of-paris
 to convert files ipynb in py
 
 	jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb
+
+## Run :
+
+	ipython3 iraw.py
