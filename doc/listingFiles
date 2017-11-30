@@ -1,0 +1,46 @@
+.:
+listingFiles
+RATP
+TRAFFIC
+
+./RATP:
+positions-geographiques-des-stations-du-reseau-ratp.csv
+positions-geographiques-des-stations-du-reseau-ratp.geojson
+RATP_GTFS_FULL
+RATP_GTFS_LINES.zip
+referentiel-des-lignes-stif.csv
+traces-du-reseau-ferre-idf.csv
+traces-du-reseau-ferre-idf.geojson
+trafic annuel
+validation
+
+./RATP/RATP_GTFS_FULL:
+agency.txt
+calendar_dates.txt
+calendar.txt
+routes.txt
+stops.txt
+stop_times.txt
+transfers.txt
+trips.txt
+
+./RATP/trafic annuel:
+trafic-annuel-entrant-par-station-du-reseau-ferre-2014.csv
+trafic-annuel-entrant-par-station-du-reseau-ferre-2015.csv
+trafic-annuel-entrant-par-station-du-reseau-ferre-2016.csv
+
+./RATP/validation:
+Données de validation.pdf
+validations-sur-le-reseau-de-surface-profils-horaires-par-jour-type-1er-sem.csv
+validations-sur-le-reseau-de-surface-profils-horaires-par-jour-type-2e-sem.csv
+validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-1er-sem.csv
+validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2e-sem.csv
+
+./TRAFFIC:
+2013_paris_donnees_trafic_capteurs.zip
+2014_paris_donnees_trafic_capteurs.zip
+2015_paris_donnees_trafic_capteurs.zip
+2016_paris_donnees_trafic_capteurs.zip
+2017_paris_donnees_trafic_capteurs.zip
+referentiel-comptages-routiers.csv
+referentiel-comptages-routiers.geojson
