@@ -11,7 +11,7 @@ import sys
 
 import sqlite3 as sql
 
-def c_geo_point_2d(x):
+def c_geo_point_2d_FLOAT(x):
     out = []
     for i in x.split(','):
         try:
@@ -21,7 +21,27 @@ def c_geo_point_2d(x):
             raise(ValueError(' x='+str(x)))
     return out
 
-def modeBD(positions,conn):
+def modeDict():
+    converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
+    positions = pd.read_csv('data/referentiel-comptages-routiers.csv',delimiter=';',converters=converters)
+    positions['lat']=positions['geo_point_2d'].apply(lambda x:x[0])
+    positions['lon']=positions['geo_point_2d'].apply(lambda x:x[1])
+
+    from collections import defaultdict
+    posdict = defaultdict(lambda :{'lat':0,'lon':0})
+    for j,i in positions[['id_arc_tra','lat','lon']].iterrows():
+        id_arc_tra = float(i.id_arc_tra)
+        lat = i.lat
+        lon = i.lon
+        posdict[id_arc_tra]={'lat':lat,'lon':lon}
+    print(positions.head(100))
+
+
+def modeBD():
+    conn = sql.connect('Traffic.db')
+    converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
+    positions = pd.read_csv('data/referentiel-comptages-routiers.csv',delimiter=';',converters=converters,chunksize=50000)
+
     for chunk in tqdm(positions):
         try:
             chunk=chunk.assign(id_arc_tra=chunk.id_arc_tra.apply(lambda x: 0 if np.isnan(x) else int(x)))
@@ -33,9 +53,16 @@ def modeBD(positions,conn):
             print("Erreur:Database")
             break
     conn.commit()
-    #verifBD(conn)
+    verifBD(conn)
+
 
 def verifBD(conn):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Capteur')
+    for i in cur.fetchall():
+        print(i)
+
+def verifBD_NULL(conn):
     cur = conn.cursor()
     #Que faire des capteur qui n'ont pas de position?
     cur.execute('SELECT * FROM Capteur WHERE lat is NULL or lon is NULL')
@@ -45,28 +72,13 @@ def verifBD(conn):
         print(i)
     
 
-
-
 def parseFileReferentiel(isModeBD):
-    conn = sql.connect('Traffic.db')
-    converters = {'geo_point_2d':c_geo_point_2d }
-    positions = pd.read_csv('data/referentiel-comptages-routiers.csv',delimiter=';',converters=converters,chunksize=50000)
     
     if(isModeBD):
-        modeBD(positions,conn)
+        modeBD()
     else:
-        '''
-        positions['lat']=positions['geo_point_2d'].apply(lambda x:x[0])
-        positions['lon']=positions['geo_point_2d'].apply(lambda x:x[1]) 
-        from collections import defaultdict
-        posdict = defaultdict(lambda :{'lat':0,'lon':0})
-        for j,i in positions[['id_arc_tra','lat','lon']].iterrows():
-            id_arc_tra = float(i.id_arc_tra)
-            lat = i.lat
-            lon = i.lon
-            posdict[id_arc_tra]={'lat':lat,'lon':lon}
-        print(positions.head(100))
-        '''
+        modeDict()
+        
 
 def parseFileTrafficYearMounth(name ,year ,month):
 
@@ -126,6 +138,7 @@ def getWeekAndDay_Number(year,month,day):
 
 print(getWeekAndDay_Number(2017,12,6))
 
-parseFileReferentiel(True)
+#modeBD()
+#modeDict()
 
 #parseFolderDataTraffic()
