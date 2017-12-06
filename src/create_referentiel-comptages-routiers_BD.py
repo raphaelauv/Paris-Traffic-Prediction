@@ -79,6 +79,13 @@ def parseFileReferentiel(isModeBD):
     else:
         modeDict()
         
+def testBD_BLABLA(conn):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM test where id_arc_trafics=1 LIMIT 100')
+    for i in cur.fetchall():
+        print(i)
+
+
 
 def parseFileTrafficYearMounth(name ,year ,month):
 
@@ -94,25 +101,34 @@ def parseFileTrafficYearMounth(name ,year ,month):
     pathName = 'traffic/'+folderName+'/'+fileName
     print(pathName)
 
-    in_it = pd.read_csv(pathName,delimiter='\t',chunksize=50000,names=['id_arc_trafic','date','debit','taux'])
-    
-    for chunk in tqdm(in_it):
-        try:
-            # line by line pre-processing
-            #print(chunk)
-            #chunk.debit = chunk.debit.apply(lambda x: 0 if np.isnan(x) else x)
-            #chunk.taux = chunk.taux.apply(lambda x: 0 if np.isnan(x) else x)
-            #chunk=chunk.assign(hour=chunk.horodate.apply(lambda x:x.hour))
-            #chunk=chunk.assign(month=chunk.horodate.apply(lambda x:x.month))
-            #chunk=chunk.assign(BDay=chunk.horodate.apply(lambda x:x.isoweekday() not in (6,7)))
-            # map from counter id to its position
-            #chunk = chunk.assign(lat=chunk.id_arc_trafic.apply(lambda x:posdict[float(x)]['lat']))
-            #chunk = chunk.assign(lon=chunk.id_arc_trafic.apply(lambda x:posdict[float(x)]['lon']))        
-            #chunk = chunk[['hour','month','BDay','debit','taux','id_arc_trafic','lat','lon']]
-            print(chunk)
-            #chunk.to_sql('traffic',conn,if_exists='append')
-        except ValueError:
-            break
+    conn = sql.connect('Blabla.db')
+
+    positions = pd.read_csv(pathName,delimiter='\t',chunksize=50000,names=["id_arc_trafics", "horodate", "debit", "taux_occ"],parse_dates=['horodate'],decimal=',')
+    i=0
+    j=0
+    for chunk in tqdm(positions):
+        i+=1
+        j+=1
+        '''
+        chunk=chunk.assign(month=chunk.horodate.apply(lambda x:x.month))
+        chunk=chunk.assign(BDay=chunk.horodate.apply(lambda x:x.day))
+        '''
+        chunk=chunk.assign(hour=chunk.horodate.apply(lambda x:x.hour))
+        chunk=chunk.assign(year=chunk.horodate.apply(lambda x:x.year))
+
+        chunk=chunk.assign(dateNumber = chunk.horodate.apply(lambda x: getDay_Number(x.year,x.month,x.day)))
+        chunk=chunk.assign(numberWeek = chunk.horodate.apply(lambda x: getWeek_Number(x.year,x.month,x.day)))
+
+        chunk=chunk[['id_arc_trafics','year','numberWeek','dateNumber','hour','debit', 'taux_occ']]
+        #print(chunk)
+        chunk.to_sql('test',con=conn,if_exists='append')
+        if(i>10):
+            print("%")
+            i=0
+    print("nb occur of FOR "+str(j))
+    tqdm(conn.commit())
+    testBD_BLABLA(conn)
+
 
 
 def parseFolderDataTraffic():
@@ -125,20 +141,37 @@ def parseFolderDataTraffic():
         for month in range(1,12+1):     
             parseFileTrafficYearMounth(strNameFolder,year,month)
             break
+        break
 
 
-def getWeekAndDay_Number(year,month,day):
+def getDay_Number(year,month,day):
+
+    '''
+    print("year ="+str(year))
+    print("month ="+str(month))
+    print("day ="+str(day))
+    '''
     import time
     from datetime import datetime
     datetime = datetime(year,month,day)
-    dateNumber=datetime.weekday()
-    weekNumber=datetime.isocalendar()[1]
+    return datetime.weekday()
 
-    return (weekNumber,dateNumber)
 
-print(getWeekAndDay_Number(2017,12,6))
+def getWeek_Number(year,month,day):
+
+    import time
+    from datetime import datetime
+    datetime = datetime(year,month,day)
+    return datetime.isocalendar()[1]
+    
+
+#print(getWeekAndDay_Number(2017,12,6))
 
 #modeBD()
 #modeDict()
 
 #parseFolderDataTraffic()
+
+conn = sql.connect('Blabla.db')
+testBD_BLABLA(conn)
+print("FINISH")
