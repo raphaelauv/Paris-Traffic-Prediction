@@ -4,7 +4,7 @@
     Le fichier referentiel-comptages-routiers.csv contenant les donnes doivent être dans le dossier data.
 '''
 
-from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import sys
@@ -70,15 +70,15 @@ def verifBD_NULL(conn):
 	#print(cur.description)
 	for i in cur.fetchall():
 	    print(i)
-	
+
 
 def parseFileReferentiel(isModeBD):
-	
+
 	if(isModeBD):
 		modeBD()
 	else:
 		modeDict()
-		
+
 def testBD_BLABLA(conn):
 	cur = conn.cursor()
 	cur.execute('SELECT * FROM test where id_arc_trafics=1 LIMIT 100')
@@ -98,20 +98,26 @@ def getPathFile(name ,year ,month):
 	fileName = name+strYearMonth+'.txt'
 
 	pathName = 'traffic/'+folderName+'/'+fileName
-	
+
 	return pathName
 
 
 def editChunk(chunk):
-	chunk=chunk.assign(hour=chunk.horodate.apply(lambda x:x.hour))
-	chunk=chunk.assign(year=chunk.horodate.apply(lambda x:x.year))
-	chunk=chunk.assign(dateNumber = chunk.horodate.apply(lambda x: getDay_Number(x.year,x.month,x.day)))
-	chunk=chunk.assign(numberWeek = chunk.horodate.apply(lambda x: getWeek_Number(x.year,x.month,x.day)))
-	chunk=chunk[['id_arc_trafics','year','numberWeek','dateNumber','hour','debit', 'taux_occ']]	
-	return chunk
+	chunk=chunk.assign(hour=chunk.horodate.apply(lambda x:x.hour) ,
+		year=chunk.horodate.apply(lambda x:x.year) ,
+		dateNumber = chunk.horodate.apply(lambda x: getDay_Number(x.year,x.month,x.day)),
+		numberWeek = chunk.horodate.apply(lambda x: getWeek_Number(x.year,x.month,x.day)))
+	#chunk=chunk.assign(year=chunk.horodate.apply(lambda x:x.year))
+	#chunk=chunk.assign()
+	#chunk=chunk.assign()
+	return chunk[['id_arc_trafics','year','numberWeek','dateNumber','hour','debit', 'taux_occ']]
+
 
 def getPositions(pathName):
-	return pd.read_csv(pathName,delimiter='\t',chunksize=50000,names=["id_arc_trafics", "horodate", "debit", "taux_occ"],parse_dates=['horodate'],decimal=',')	
+
+	return pd.read_csv(pathName,delimiter='\t',
+			chunksize=10000,
+			names=["id_arc_trafics", "horodate", "debit", "taux_occ"],parse_dates=['horodate'],decimal=',')
 
 from concurrent import futures
 def parseFolderDataTraffic():
@@ -128,21 +134,25 @@ def parseFolderDataTraffic():
 
 	listOfFuturs=[]
 
-	for year in range(startYear,startYear+numberOfYears):
-		for month in range(1,numberOfMonth+1):
+	for year in tqdm(range(startYear,startYear+numberOfYears)):
+		for month in tqdm(range(1,numberOfMonth+1)):
 
 			pathName =getPathFile(strNameFolder ,year ,month)
-			positions = getPositions(pathName)
+			try:
+				positions = getPositions(pathName)
+			except FileNotFoundError :
+				print("\nfile not available -> "+pathName+"\n")
+				continue
 
-			for chunk in tqdm(positions):
+			for chunk in positions:
 				listOfFuturs.append(executor.submit(editChunk,chunk))
-				
-			for fut in tqdm(futures.as_completed(listOfFuturs)):
-				putToDB(fut.result(),conn)
-			tqdm(conn.commit())
 
+			for fut in tqdm(futures.as_completed(listOfFuturs), total=len(listOfFuturs)):
+				putToDB(fut.result(),conn)
+			conn.commit()
 	conn.close()
-	
+	executor.shutdown()
+
 def putToDB(chunk,conn):
 	chunk.to_sql('test',con=conn, if_exists='append')
 
@@ -165,15 +175,16 @@ def getWeek_Number(year,month,day):
 	from datetime import datetime
 	datetime = datetime(year,month,day)
 	return datetime.isocalendar()[1]
-	
+
 
 #print(getWeekAndDay_Number(2017,12,6))
 
 #modeBD()
 #modeDict()
-
+print("\n")
 parseFolderDataTraffic()
 
 #conn = sql.connect('Blabla.db')
 #testBD_BLABLA(conn)
 print("FINISH")
+#modeDict()
