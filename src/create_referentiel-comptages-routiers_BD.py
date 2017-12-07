@@ -125,18 +125,16 @@ def parseFolderDataTraffic():
 	strNameFolder = "donnees_trafic_capteurs_"
 	startYear = 2013
 	numberOfYears=1
-	numberOfMonth = 1
+	numberOfMonth = 12
 
 	conn = sql.connect('Blabla.db')
 
 	nbThreads = 4
 	executor = futures.ProcessPoolExecutor(max_workers=nbThreads)
 
-	listOfFuturs=[]
-
 	for year in tqdm(range(startYear,startYear+numberOfYears)):
 		for month in tqdm(range(1,numberOfMonth+1)):
-
+			listOfFuturs=[]
 			pathName =getPathFile(strNameFolder ,year ,month)
 			try:
 				positions = getPositions(pathName)
@@ -147,7 +145,7 @@ def parseFolderDataTraffic():
 			for chunk in positions:
 				listOfFuturs.append(executor.submit(editChunk,chunk))
 
-			for fut in tqdm(futures.as_completed(listOfFuturs), total=len(listOfFuturs)):
+			for fut in tqdm(futures.as_completed(listOfFuturs), total=len(listOfFuturs), desc=pathName):
 				putToDB(fut.result(),conn)
 			conn.commit()
 	conn.close()
