@@ -1,5 +1,5 @@
 '''
-
+All the functions necessary to parse and store to the BD
 '''
 
 from tqdm import tqdm
@@ -21,6 +21,10 @@ def c_geo_point_2d_FLOAT(x):
 	        raise(ValueError(' x='+str(x)))
 	return out
 
+'''
+read the file of geo positions of sensors
+and return a dictionnary of values
+'''
 def modeDict():
 	converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
 	positions = pd.read_csv('data/referentiel-comptages-routiers.csv',delimiter=';',converters=converters)
@@ -37,6 +41,10 @@ def modeDict():
 	print(posdict)
 	return posdict
 
+'''
+read the file of geo positions of sensors
+and create a BD SQLite maned Traffic.db
+'''
 def modeBD():
 	conn = sql.connect('Traffic.db')
 	converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
@@ -53,15 +61,19 @@ def modeBD():
 			print("Erreur:Database")
 			break
 	conn.commit()
-	verifBD(conn)
+	#verifBD(conn)
 
-
+'''
+print the content of the traffic sensors BD
+'''
 def verifBD(conn):
 	cur = conn.cursor()
 	cur.execute('SELECT * FROM Capteur')
 	for i in cur.fetchall():
 	    print(i)
-
+'''
+print the content of the traffic sensors BD without nul values
+'''
 def verifBD_NULL(conn):
 	cur = conn.cursor()
 	#Que faire des capteur qui n'ont pas de position?
@@ -72,15 +84,13 @@ def verifBD_NULL(conn):
 	    print(i)
 
 
-def parseFileReferentiel(isModeBD):
-
-	if(isModeBD):
-		modeBD()
-	else:
-		modeDict()
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+'''
+plot the result of a Query
+'''
 def plotQuery(list):
 
 	
@@ -118,7 +128,9 @@ def plotQuery(list):
 	plt.plot(flagBlack, 'b--')
 	plt.show()
 
-
+'''
+print the content of the db of traffic
+'''
 def testBD_BLABLA(conn):
 	cur = conn.cursor()
 	cur.execute('SELECT * FROM test where id_arc_trafics=1 LIMIT 500')
@@ -129,7 +141,9 @@ def testBD_BLABLA(conn):
 
 
 
-
+'''
+return the str of the file correspondig to the Year , month gived
+'''
 def getPathFile(name ,year ,month):
 	strYearMonth=""
 	if(month<10):
@@ -159,6 +173,9 @@ def getStrColor(color):
 	else:
 		return "GREEN"
 
+'''
+cluster values of debit and taux 
+'''
 def findFlag(debit,taux):
 	
 	if(taux>35):
@@ -170,9 +187,15 @@ def findFlag(debit,taux):
 	else:
 		return FLAG_GREEN
 
+'''
+return the value of the year inside the x :str   | 2017-10-15   -> 2015
+'''
 def parseYear(x):
 	return int(x.split('-')[0])
 
+'''
+return the value of the hour inside the x :str   | 23-01-12   -> 23
+'''
 def parseHour(x):
 	return int(x.split(':')[0])
 	'''
@@ -204,7 +227,9 @@ def getWeek_DATE(date):
 	day = int(tab[2])
 	return  datetime(year,month,day).isocalendar()[1]
 
-
+'''
+return a tuple of number of day and number of week  | date is a str of date : 2017-04-29
+'''
 def getTupleWeek_Day(date):
 	tab= date.split("-")
 	year = int(tab[0])
@@ -222,6 +247,9 @@ def exemple(x):
 	x['numberWeek']= mytuple[0]
 	x['dateNumber']= mytuple[1]
 
+'''
+create new column with desirade data
+'''
 def editChunk(chunk):
 	chunk=chunk.	assign(
 		hour=chunk.theHour.apply(lambda x:parseHour(x)) ,
@@ -236,9 +264,10 @@ def editChunk(chunk):
 	#chunk = chunk.apply(exemple,axis=1)
 	return chunk[['id_arc_trafics','year','numberWeek','dateNumber','hour','debit', 'taux_occ']]
 
-
+'''
+return a pandas object iterable of the file in argument
+'''
 def getPositions(pathName):
-
 	return pd.read_csv(pathName, header=None , delimiter=r"\s+",dtype={'date':'str','theHour':'str'},
 			chunksize=50000,names=["id_arc_trafics", "date","theHour", "debit", "taux_occ"],decimal=',')
 
@@ -297,6 +326,14 @@ def createBulk(namePath,conn):
 			if(cmp==1000):
 				cur = conn.cursor()
 				cur.execute('BEGIN TRANSACTION')
+				for i in array:
+					if(len(i)<7):
+						cur.execute('INSERT OR IGNORE INTO test  VALUES (?,?,?,?,?,?)', (i[0], i[1] , i[2] ,i[3],i[4],i[5]))
+					elif(len(i)<8):
+						cur.execute('INSERT OR IGNORE INTO test  VALUES (?,?,?,?,?,?,?)', (i[0], i[1] , i[2] ,i[3],i[4],i[5],i[6]))
+					else:
+						cur.execute('INSERT OR IGNORE INTO test  VALUES (?,?,?,?,?,?,?,?)', (i[0], i[1] , i[2] ,i[3],i[4],i[5],i[6],i[7]))
+
 				cur.execute('COMMIT')
 				cmp=0
 
@@ -307,11 +344,26 @@ def createBulk(namePath,conn):
 
 
 from concurrent import futures
+'''
+parse and store to the db all the folders from year : startYear
+exemple : 2013 , 4 , 12
+
+will parse and store the 12 month of year 2013 ,2014 ,2015 and 2016
+'''
 def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
 
 	strNameFolder = "donnees_trafic_capteurs_"
 
 	conn = sql.connect('Blabla.db')
+	cur =conn.cursor()
+
+	cur.execute('CREATE TABLE IF NOT EXISTS test (id_arc_trafics INTEGER, year INTEGER, numberWeek INTEGER, dateNumber INTEGER , hour INTEGER , debit REAL , taux_occ REAL)')
+
+	cursor = conn.execute('select * from test')
+	names = list(map(lambda x: x[0], cursor.description))
+	print(names)
+	return
+
 	import multiprocessing
 
 	nbThreads = multiprocessing.cpu_count()
@@ -337,22 +389,23 @@ def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
 	conn.close()
 	executor.shutdown()
 
+'''
+chunk is a pandas series of data 
+conn the connector to the SQL bd
+'''
 def putToDB(chunk,conn):
 	chunk.to_sql('test',con=conn, if_exists='append')
 
 
-#modeBD()
-#modeDict()
+
 conn = sql.connect('Blabla.db')
 #createBulk("traffic/2013_paris_donnees_trafic_capteurs/donnees_trafic_capteurs_201301.txt",conn)
 print("\n")
-
 
 parseFolderDataTraffic(2013,1,1)
 
 print("\n")
 
-
-testBD_BLABLA(conn)
+#testBD_BLABLA(conn)
 print("FINISH")
-#modeDict()
+
