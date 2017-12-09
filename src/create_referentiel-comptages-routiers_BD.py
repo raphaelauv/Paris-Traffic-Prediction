@@ -8,6 +8,8 @@ import numpy as np
 import sys
 
 import sqlite3 as sql
+import time
+from datetime import datetime
 
 def c_geo_point_2d_FLOAT(x):
 	out = []
@@ -52,12 +54,6 @@ def modeBD():
 			break
 	conn.commit()
 	verifBD(conn)
-
-
-def parseManual(line):
-	arrayLine = line.split(" ")
-	for i in range(len(arrayLine)):
-		print(arrayLine[i])
 
 
 def verifBD(conn):
@@ -126,7 +122,7 @@ def plotQuery(list):
 def testBD_BLABLA(conn):
 	cur = conn.cursor()
 	cur.execute('SELECT * FROM test where id_arc_trafics=1 LIMIT 500')
-	plotQuery(cur.fetchall())
+	#plotQuery(cur.fetchall())
 	for i in cur.fetchall():
 		valFlag= findFlag(i[6],i[7])
 		print(str(i)+" -> "+getStrColor(valFlag))
@@ -174,24 +170,72 @@ def findFlag(debit,taux):
 	else:
 		return FLAG_GREEN
 
+def parseYear(x):
+	return int(x.split('-')[0])
+
+def parseHour(x):
+	return int(x.split(':')[0])
+	'''
+	tab= x.split(':')
+	try:
+		return int(tab[0])
+	except ValueError:
+		return np.nan
+	'''
+
+def getDay_DATE(date):
+	tab= date.split("-")
+	year = int(tab[0])
+	month = int(tab[1])
+	day = int(tab[2])
+	return datetime(year,month,day).weekday()
+
+def getWeek_DATE(date):	
+	tab= date.split("-")
+	year = int(tab[0])
+	month = int(tab[1])
+	day = int(tab[2])
+	return  datetime(year,month,day).isocalendar()[1]
+
+
+def getTupleWeek_Day(date):
+	print(date)
+	tab= date.split("-")
+	year = int(tab[0])
+	month = int(tab[1])
+	day = int(tab[2])
+	mydate = datetime(year,month,day)
+	print(mydate.weekday() , mydate.isocalendar()[1])
+	return (mydate.weekday() , mydate.isocalendar()[1])
+
+
+'''
+Performane is not here, weird
+'''
+def exemple(x):
+	mytuple = getTupleWeek_Day(x['date'])
+	x['numberWeek']= mytuple[0]
+	x['dateNumber']= mytuple[1]
+
 def editChunk(chunk):
-	chunk=chunk.assign(hour=chunk.horodate.apply(lambda x:x.hour) ,
-		year=chunk.horodate.apply(lambda x:x.year) ,
-		numberWeek = chunk.horodate.apply(lambda x:x.isocalendar()[1]),
-		dateNumber = chunk.horodate.apply(lambda x:x.isoweekday())
-		
-		#dateNumber = chunk.horodate.apply(lambda x: getDay_Number(x.year,x.month,x.day)),
-		#numberWeek = chunk.horodate.apply(lambda x: getWeek_Number(x.year,x.month,x.day)),
+	chunk=chunk.assign(
+		hour=chunk.theHour.apply(lambda x:parseHour(x)) ,
+		year=chunk.date.apply(lambda x:parseYear(x)) ,
+		dateNumber = chunk.date.apply(lambda x: getDay_DATE(x)),
+		numberWeek = chunk.date.apply(lambda x: getWeek_DATE(x)),
+		#year=chunk.horodate.apply(lambda x:x.year) ,
+		#numberWeek = chunk.horodate.apply(lambda x:x.isocalendar()[1]),
+		#dateNumber = chunk.horodate.apply(lambda x:x.isoweekday())
 		)
 	#chunk=chunk.assign(BDay=chunk.horodate.apply(lambda x:x.isoweekday()))
+	#chunk = chunk.apply(exemple,axis=1)
 	return chunk[['id_arc_trafics','year','numberWeek','dateNumber','hour','debit', 'taux_occ']]
 
 
 def getPositions(pathName):
 
-	return pd.read_csv(pathName,delimiter='\t',
-			chunksize=50000, infer_datetime_format=True,
-			names=["id_arc_trafics", "horodate", "debit", "taux_occ"],parse_dates=['horodate'],decimal=',')
+	return pd.read_csv(pathName, header=None , delimiter=r"\s+",dtype={'date':'str','theHour':'str'},
+			chunksize=50000,names=["id_arc_trafics", "date","theHour", "debit", "taux_occ"],decimal=',')
 
 from concurrent import futures
 def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
@@ -202,7 +246,7 @@ def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
 	import multiprocessing
 
 	nbThreads = multiprocessing.cpu_count()
-	executor = futures.ProcessPoolExecutor(max_workers=nbThreads)
+	executor = futures.ProcessPoolExecutor(max_workers=nbThreads+2)
 
 	for year in tqdm(range(startYear,startYear+numberOfYears)):
 		for month in tqdm(range(1,numberOfMonth+1)):
@@ -226,27 +270,14 @@ def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
 def putToDB(chunk,conn):
 	chunk.to_sql('test',con=conn, if_exists='append')
 
-def getDay_Number(year,month,day):
-	import time
-	from datetime import datetime
-	datetime = datetime(year,month,day)
-	return datetime.weekday()
-
-
-def getWeek_Number(year,month,day):
-	import time
-	from datetime import datetime
-	datetime = datetime(year,month,day)
-	return datetime.isocalendar()[1]
-
 
 #modeBD()
 #modeDict()
 print("\n")
-parseFolderDataTraffic(2017,1,12)
+parseFolderDataTraffic(2013,1,12)
 
 print("\n")
-#conn = sql.connect('Blabla.db')
+conn = sql.connect('Blabla.db')
 #testBD_BLABLA(conn)
 print("FINISH")
 #modeDict()
