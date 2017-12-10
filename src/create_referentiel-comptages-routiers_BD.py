@@ -356,14 +356,14 @@ def parseFolderDataTraffic(startYear,numberOfYears,numberOfMonth):
 
 	conn = sql.connect('Blabla.db')
 	cur =conn.cursor()
-
+	'''
 	cur.execute('CREATE TABLE IF NOT EXISTS test (id_arc_trafics INTEGER, year INTEGER, numberWeek INTEGER, dateNumber INTEGER , hour INTEGER , debit REAL , taux_occ REAL)')
 
 	cursor = conn.execute('select * from test')
 	names = list(map(lambda x: x[0], cursor.description))
 	print(names)
 	return
-
+	'''
 	import multiprocessing
 
 	nbThreads = multiprocessing.cpu_count()
@@ -402,7 +402,7 @@ conn = sql.connect('Blabla.db')
 #createBulk("traffic/2013_paris_donnees_trafic_capteurs/donnees_trafic_capteurs_201301.txt",conn)
 print("\n")
 
-parseFolderDataTraffic(2013,1,1)
+parseFolderDataTraffic(2013,1,12)
 
 print("\n")
 

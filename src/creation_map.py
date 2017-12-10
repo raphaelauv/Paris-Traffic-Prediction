@@ -23,55 +23,112 @@ def c_geo_point_2d_FLOAT(x):
             raise(ValueError(' x='+str(x)))
     return out
 
+'''
+return a dictionnary
+'''
 def modeDict():
     converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
     positions = pd.read_csv('data/referentiel-comptages-routiers.csv',delimiter=';',converters=converters)
     positions['lat']=positions['geo_point_2d'].apply(lambda x:x[0])
     positions['lon']=positions['geo_point_2d'].apply(lambda x:x[1])
-    
+
     from collections import defaultdict
-    posdict = defaultdict(lambda :{'lat':0,'lon':0})
+    posdict = defaultdict(lambda :(0,0))
+    cmp=0
     for j,i in positions[['id_arc_tra','lat','lon']].iterrows():
-        id_arc_tra = float(i.id_arc_tra)
-        lat = i.lat
-        lon = i.lon
-        posdict[id_arc_tra]={'lat':lat,'lon':lon}
+        if(not np.isnan(i.id_arc_tra)):
+            id_arc_tra = int(i.id_arc_tra)
+            posdict[id_arc_tra]=(i.lat,i.lon)
+        else:
+            print("line "+str(cmp)+" do not have id_arc_tra -> "+str(i.lat)+" "+str(i.lon))
+        cmp+=1
     return posdict
 
+'''
+get image of paris
+'''
 def make_map_paris():
     return folium.Map(location=[48.85, 2.34],tiles='Stamen Toner',zoom_start=12)
 
+sensor_dict=modeDict()
+
 def make_map_from_request(name,index):
     map_osm = make_map_paris()
-    sensor_dict=modeDict()
-    for i in tqdm(cur.fetchall()):
+    for i in tqdm(cur.fetchall() , desc=name):
         item=sensor_dict[i[index]]
-        lat=item['lat']
-        lon =item['lon']
-        if(not pd.isnull(lat)):
-            folium.Circle(radius=10,location=[lat, lon],popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
+        if(not np.isnan(item).any()):
+            if(len(item)==2):
+                folium.Circle(radius=10,location=item,popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
         else:
-            print("Sensor without lat and lon")
-            print(i[index])
-
+            print("Sensor without lat and lon -> "+str(i[index]))
     map_osm.save(name)
 
 
+
+import dill
+def createOSMObjectArray(ArrayOfitem):
+    out= []
+    for i in ArrayOfitem:
+        #print(dill.pickles(folium.Circle(radius=10,location=i,popup='The Waterfront',color='crimson',fill=False)))
+        out.append(folium.Circle(radius=10,location=i,popup='The Waterfront',color='crimson',fill=False))
+    print(out)
+    return out
+    
+
+from concurrent import futures
+import multiprocessing
+def emptyListFuturs(listOfFuturs,map_osm):
+    for fut in futures.as_completed(listOfFuturs):
+        putToMapOSM(fut.result(),map_osm)
+
+'''
+parallelised version ( not working in processMode because folium.Circle is not pickable)
+but working in mode ThreadPoolExecutor
+'''
 def map_all_sensor():
+    
+    nbThreads = multiprocessing.cpu_count()
+    
+    listOfFuturs=[]
     map_osm = make_map_paris()
-    for id,item in tqdm(modeDict().items()):
-        lat=item['lat']
-        lon =item['lon']
-        if(not np.isnan(lat)):
-            folium.Circle(radius=10,location=[lat, lon],popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
+    arrayOfItems=[]
+    cmp=0
+    cmpJ=0
+    #executor = futures.ProcessPoolExecutor(max_workers=nbThreads)
+    for id,item in tqdm(sensor_dict.items()):
+        if(not np.isnan(item).any()):
+            if(len(item)==2):
+                arrayOfItems.append(item)
+                cmp+=1
+                folium.Circle(radius=10,location=item,popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
+                '''
+        if(cmp==10):
+            listOfFuturs.append(executor.submit(createOSMObjectArray,arrayOfItems))
+            arrayOfItems=[]
+            cmpJ+=1
+            cmp=0
+        if(cmpJ>10):
+            emptyListFuturs(listOfFuturs,map_osm)
+            listOfFuturs=[]
+
+    emptyListFuturs(listOfFuturs,map_osm)
+    executor.shutdown()
+    if(cmp>1):
+        putToMapOSM(createOSMObjectArray(arrayOfItems),map_osm)
+    '''
     map_osm.save('sensors_map.html')
+
+def putToMapOSM(arrayOfItems,map_osm):
+    for i in arrayOfItems:
+        i.add_to(map_osm)
+
 
 def map_sensor_without_taux_occ():
     capteur_without_taux_occ()
     make_map_from_request('map_sensor_without_taux_occ.html',0)
 
 def map_sensor_with_taux_occ_bigger_than_100():
-    taux_occ_sup_100()
+    taux_ccc_sup_100()
     make_map_from_request('map_sensor_with_taux_occ_bigger_than_100.html',1)
 
 def map_sensor_with_all_data():
@@ -79,6 +136,22 @@ def map_sensor_with_all_data():
     make_map_from_request('map_sensor_with_all_data.html',1)
 
 
+def getPositionsBlock(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
+    diffLat = abs(latUpLeft - latDownRight)
+    diffLon = abs(lonUpLeft - lonDownRight)
+
+    curLon=diffLat/div
+    curLon=diffLon/div
+    
+    array = []
+
+
+
+
+#getPositionsBlock(48.906254,2.260094 ,48.807316 , 2.426262 , 10)
+
+#if __name__ == '__main__':
+#map_all_sensor()
 map_sensor_without_taux_occ()
 map_sensor_with_taux_occ_bigger_than_100()
 map_sensor_with_all_data()
