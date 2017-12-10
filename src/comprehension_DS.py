@@ -8,7 +8,6 @@ import numpy as np
 
 
 conn = sql.connect('Blabla.db')
-
 cur = conn.cursor()
 
 def delete_Null():
