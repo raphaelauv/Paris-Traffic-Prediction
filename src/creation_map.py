@@ -48,7 +48,7 @@ def modeDict():
 get image of paris
 '''
 def make_map_paris():
-    #tiles='Stamen Toner' , zoom_start=12
+	#tiles='Stamen Toner' , zoom_start=12
     return folium.Map(location=[48.85, 2.34])
 
 sensor_dict=modeDict()
@@ -138,47 +138,55 @@ def map_sensor_with_all_data():
 
 
 def getPositionsBlock(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
-    diffLat = abs(latUpLeft - latDownRight)
-    diffLon = abs(lonUpLeft - lonDownRight)
+	diffLat = abs(latUpLeft - latDownRight)
+	diffLon = abs(lonUpLeft - lonDownRight)
 
-    curLat=diffLat/div
-    curLon=diffLon/div
+	curLat=diffLat/div
+	curLon=diffLon/div
 
-    latUpLeft -= curLat/3
-    lonUpLeft += curLon/3
+	latUpLeft -= curLat/3
+	lonUpLeft += curLon/3
 
-    matrix = [[0.0 for x in range(div)] for y in range(div)] 
-    matrix[0][0]= (latUpLeft,lonUpLeft)
-    first=True
-    for i in range(0,div):
-        for j in range(0,div):
-            if(not first):
-                matrix[i][j]=(latUpLeft-(curLat*i) , lonUpLeft + (curLon*j))
-            else:
-                first=False
+	matrix = [[0.0 for x in range(div)] for y in range(div)] 
+	matrix[0][0]= (latUpLeft,lonUpLeft)
+	first=True
+	for i in range(0,div):
+		for j in range(0,div):
+			if(not first):
+				matrix[i][j]=(latUpLeft-(curLat*i) , lonUpLeft + (curLon*j))
+			else:
+				first=False
 
-    return matrix
+	return matrix
 
 def printMatrix(matrix,div):
-    for i in range(0,div):
-        for j in range(0,div):
-            print (matrix[i][j] , end='   ')
-        print('')
+	for i in range(0,div):
+		for j in range(0,div):
+			print (matrix[i][j] , end='   ')
+		print('')
 
 def make_map_from_matrice(matrix,name,div):
     map_osm = make_map_paris()
+    lastItem=[]
+    first=True
     for i in tqdm(range(div) , desc=name):
         for j in range(div):
             item=matrix[i][j]
-            folium.Circle(radius=10,location=item,popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
+            #folium.Circle(radius=10,location=item,popup=str(i)+" "+str(j),color='crimson',fill=False).add_to(map_osm)
+            if(first):
+                first=False
+                lastItem=item
+            else:
+                folium.PolyLine(locations=[item,lastItem] ,color= 'red' ).add_to(map_osm)
+                lastItem=item
     map_osm.save(name)
 
 def createFileMasterPosition():
-    div=15
-    matrix =getPositionsBlock(48.906254,2.260094 ,48.807316 , 2.426262 , div)
-    #printMatrix(matrix,div)
-    nameFile="matrixMaster.html"
-    make_map_from_matrice(matrix,nameFile,div)
+	div=15
+	matrix =getPositionsBlock(48.906254,2.260094 ,48.807316 , 2.426262 , div)
+	#printMatrix(matrix,div)
+	nameFile="matrixMaster.html"
+	make_map_from_matrice(matrix,nameFile,div)
 
 createFileMasterPosition()
 
