@@ -24,6 +24,9 @@ def calcul_correlation():
         debit.append(i[3])
     print(np.corrcoef(debit,taux_occ)[0][1])
 
+#sensors with all the information
+def sensor_with_all_data():
+    cur.execute('SELECT * FROM test WHERE taux_occ IS NOT NULL AND debit IS NOT NULL GROUP BY id_arc_trafics')
 
 #moyenne des debits et taux_occ par jours
 def avg_debit_taux_occ_by_day():
@@ -78,11 +81,5 @@ def incoherence_1():
 def incoherence_2():
     cur.execute('SELECT * FROM test WHERE taux_occ=0 AND debit>0')
 
-avg_debit_taux_occ_by_day_order_by_taux_occ()
-
-for i in cur.fetchall():
-    print(i)
 
 
-conn.close()
-print("Fini")
