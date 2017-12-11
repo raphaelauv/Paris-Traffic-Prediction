@@ -53,16 +53,17 @@ def make_map_paris():
 
 sensor_dict=modeDict()
 
-def make_map_from_request(name,index):
-	map_osm = make_map_paris()
-	for i in tqdm(cur.fetchall() , desc=name):
-		item=sensor_dict[i[index]]
-		if(not np.isnan(item).any()):
-			if(len(item)==2):
-				folium.Circle(radius=10,location=item,popup='The Waterfront',color='crimson',fill=False).add_to(map_osm)
-		else:
-			print("Sensor without lat and lon -> "+str(i[index]))
-	map_osm.save(name)
+def make_map_from_request(name,index,color_='crimson',save=True):
+    map_osm = make_map_paris()
+    for i in tqdm(cur.fetchall() , desc=name):
+        item=sensor_dict[i[index]]
+        if(not np.isnan(item).any()):
+            if(len(item)==2):
+                folium.Circle(radius=10,location=item,popup='The Waterfront',color=color_,fill=False).add_to(map_osm)
+            else:
+                print("Sensor without lat and lon -> "+str(i[index]))
+    if(save):
+        map_osm.save(name)
 
 
 
@@ -123,18 +124,9 @@ def putToMapOSM(arrayOfItems,map_osm):
 	for i in arrayOfItems:
 		i.add_to(map_osm)
 
-
-def map_sensor_without_taux_occ():
-	capteur_without_taux_occ()
-	make_map_from_request('map_sensor_without_taux_occ.html',0)
-
 def map_sensor_with_taux_occ_bigger_than_100():
-	taux_ccc_sup_100()
+	taux_occ_sup_100()
 	make_map_from_request('map_sensor_with_taux_occ_bigger_than_100.html',1)
-
-def map_sensor_with_all_data():
-	sensor_with_all_data()
-	make_map_from_request('map_sensor_with_all_data.html',1)
 
 
 def getMatrix(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
@@ -296,13 +288,41 @@ def KmeansFromRequest(name,index,k):
 	createHTMLfromClustering(npallItems,x,y,name)
 	#plotFromClustering(npallItems,x,y)
 
-	
-KmeansFromRequest('map_sensor_with_all_data.html',1,50)
+def put_sensors(map,index,color='red'):
+    for i in tqdm(cur.fetchall()):
+        item=sensor_dict[i[index]]
+        if(not np.isnan(item).any()):
+            if(len(item)==2):
+                folium.Circle(radius=10,location=item,popup=str(i[index]),color=color,fill=False).add_to(map)
+            else:
+                print("Sensor without lat and lon -> "+str(i[index]))
 
-createHTML_MATRIX()
-map_sensor_without_taux_occ()
-map_sensor_with_taux_occ_bigger_than_100()
-map_sensor_with_all_data()
+
+def map_sensors_by_stats(year):
+    map_osm = make_map_paris()
+    capteur_broken(year)
+    feat_group1 = folium.FeatureGroup(name="Capteurs hors services(Aucune valeurs sur 70% des example)")
+    put_sensors(feat_group1,0,'red')
+    capteur_without_taux_occ(year)
+    feat_group2 =  folium.FeatureGroup(name="Capteurs sans taux d'occupation 70% du temps.")
+    put_sensors(feat_group2,0,'purple')
+    sensor_with_all_data(year)
+    feat_group3 =  folium.FeatureGroup(name="Cateurs avec debit et taux d'occupation 70% du temps")
+    put_sensors(feat_group3,1,'green')
+    map_osm.add_child(feat_group1)
+    map_osm.add_child(feat_group2)
+    map_osm.add_child(feat_group3)
+    map_osm.add_child(folium.LayerControl())
+    map_osm.save("map_sensors_by_stats_"+year+".html")
+
+	
+#KmeansFromRequest('map_sensor_with_all_data.html',1,50)
+
+#createHTML_MATRIX()
+#map_sensor_without_taux_occ()
+#map_sensor_with_taux_occ_bigger_than_100()
+#map_sensor_with_all_data()
+#map_sensors_by_stats('2015')
 
 
 #if __name__ == '__main__':
