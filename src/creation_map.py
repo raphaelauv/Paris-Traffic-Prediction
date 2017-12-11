@@ -316,6 +316,106 @@ def map_sensors_by_stats(year):
     map_osm.save("map_sensors_by_stats_"+year+".html")
 
 	
+
+def getAveragePonderate(list):
+	coeff=[1,4,2,4,1]
+	coeffLimit=[7,10,17,21,24]
+	
+	AllAverageValues=[]
+	indexCoeff=0
+
+	actualValues=[]
+	for i in list:
+		
+		hour = i[1]
+		if(hour==coeffLimit[indexCoeff]):
+			indexCoeff+=1
+			if(len(actualValues)==0):
+				AllAverageValues.append(0)
+			else:
+				AllAverageValues.append(float(sum(actualValues))/len(actualValues))
+			actualValues=[]
+
+		if(i[3] is not None):
+			actualValues.append(i[3])
+
+	if(len(actualValues)==0):
+		AllAverageValues.append(0)
+	else:
+		AllAverageValues.append(float(sum(actualValues))/len(actualValues))
+
+
+	if(len(AllAverageValues)==0):
+		return 0
+	#print(AllAverageValues)
+
+	finalValue =0
+	indexCoeff=0
+	for i in AllAverageValues:
+		finalValue+= i*coeff[indexCoeff]
+		indexCoeff+=1
+
+	finalValue = float(finalValue/sum(coeff))
+	return finalValue
+
+
+def getColor(value):
+	if(value==0):
+		return '#ADD8E6'
+	if(value<3):
+		return '#008000'
+	elif(value<5):
+		return '#008000'
+	elif(value<9):
+		return '#FF0000'
+	return '#000000'
+
+
+def AverageDayMap(year,numberWeek , dayNumber):
+	map_osm = make_map_paris()
+	strQuery = allDataFromDate(year,numberWeek,dayNumber)
+	cur.execute(strQuery)
+
+	id_arc = 0
+	first=True
+
+	listValues =[]
+
+	list_Item_AverageValues=[]
+	for i in cur.fetchall():
+		if(first):
+			id_arc = i[0]
+			first=False
+		else:
+			if(id_arc != i[0]):
+				item=sensor_dict[id_arc]
+				valueItem = getAveragePonderate(listValues)
+				list_Item_AverageValues.append((id_arc,item,valueItem))
+				id_arc=i[0]
+				listValues =[]
+
+		
+		listValues.append(i)
+
+	item=sensor_dict[id_arc]
+	valueItem = getAveragePonderate(listValues)
+	list_Item_AverageValues.append((id_arc,item,valueItem))
+	
+	for i in tqdm(list_Item_AverageValues , desc='AverageDayMap'):
+		id_arc = i[0]
+		item = i[1]
+		if(i[2]==0):
+			continue
+		color = getColor(i[2])
+		if(not np.isnan(item).any()):
+			if(len(item)==2):
+				folium.Circle(radius=10,location=item,popup=str(id_arc),color=color,fill=False).add_to(map_osm)
+	map_osm.save('AverageDayMap.html')
+	
+
+
+AverageDayMap(2013,2,4)
+
 #KmeansFromRequest('map_sensor_with_all_data.html',1,50)
 
 #createHTML_MATRIX()

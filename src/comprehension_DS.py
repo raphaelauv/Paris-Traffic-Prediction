@@ -12,6 +12,12 @@ conn = sql.connect('Blabla.db')
 
 cur = conn.cursor()
 
+
+def allDataFromDate(year , numberWeek , dateNumber):
+    query= 'SELECT id_arc_trafics,hour ,debit ,taux_occ FROM test WHERE year='+str(year)+' AND numberWeek='+str(numberWeek)+' AND dateNumber='+str(dateNumber)+' ORDER BY id_arc_trafics'
+    print(query)
+    return query
+
 def delete_Null():
     cur.execute('DELETE FROM test WHERE taux_occ is NULL OR debit is NULL ')
     conn.commit()
