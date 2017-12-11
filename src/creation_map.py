@@ -53,17 +53,17 @@ def make_map_paris():
 
 sensor_dict=modeDict()
 
-def make_map_from_request(name,index,color_='crimson',save=True):
-    map_osm = make_map_paris()
-    for i in tqdm(cur.fetchall() , desc=name):
-        item=sensor_dict[i[index]]
-        if(not np.isnan(item).any()):
-            if(len(item)==2):
-                folium.Circle(radius=10,location=item,popup='The Waterfront',color=color_,fill=False).add_to(map_osm)
-            else:
-                print("Sensor without lat and lon -> "+str(i[index]))
-    if(save):
-        map_osm.save(name)
+def make_map_from_request(cur,name,index,color_='crimson',save=True):
+	map_osm = make_map_paris()
+	for i in tqdm(cur.fetchall() , desc=name):
+		item=sensor_dict[i[index]]
+		if(not np.isnan(item).any()):
+			if(len(item)==2):
+				folium.Circle(radius=10,location=item,popup='The Waterfront',color=color_,fill=False).add_to(map_osm)
+			else:
+				print("Sensor without lat and lon -> "+str(i[index]))
+	if(save):
+		map_osm.save(name)
 
 
 
@@ -125,8 +125,15 @@ def putToMapOSM(arrayOfItems,map_osm):
 		i.add_to(map_osm)
 
 def map_sensor_with_taux_occ_bigger_than_100():
-	taux_occ_sup_100()
-	make_map_from_request('map_sensor_with_taux_occ_bigger_than_100.html',1)
+	
+
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
+	strQuery = taux_occ_sup_100()
+	cur.execute(strQuery)
+	make_map_from_request(cur,'map_sensor_with_taux_occ_bigger_than_100.html',1)
+
+	conn.close()
 
 
 def getMatrix(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
@@ -216,12 +223,12 @@ def plotKMeansMatrix():
 https://stackoverflow.com/questions/20792445/calculate-rgb-value-for-a-range-of-values-to-create-heat-map
 '''
 def rgb(minimum, maximum, value):
-    minimum, maximum = float(minimum), float(maximum)
-    ratio = 2 * (value-minimum) / (maximum - minimum)
-    b = int(max(0, 255*(1 - ratio)))
-    r = int(max(0, 255*(ratio - 1)))
-    g = 255 - b - r
-    return (r, g, b)
+	minimum, maximum = float(minimum), float(maximum)
+	ratio = 2 * (value-minimum) / (maximum - minimum)
+	b = int(max(0, 255*(1 - ratio)))
+	r = int(max(0, 255*(ratio - 1)))
+	g = 255 - b - r
+	return (r, g, b)
 
 '''
 https://stackoverflow.com/questions/3380726/converting-a-rgb-color-tuple-to-a-six-digit-code-in-python
@@ -264,8 +271,10 @@ def plotFromClustering(npallItems,x,y):
 def KmeansFromRequest(name,index,k):
 	import numpy as np
 	
-
-	sensor_with_all_data()
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
+	strQuery = sensor_with_all_data_AllYears()
+	cur.execute(strQuery)
 	
 	from pyproj import Proj
 	#transformation should be done here
@@ -288,33 +297,46 @@ def KmeansFromRequest(name,index,k):
 	createHTMLfromClustering(npallItems,x,y,name)
 	#plotFromClustering(npallItems,x,y)
 
-def put_sensors(map,index,color='red'):
-    for i in tqdm(cur.fetchall()):
-        item=sensor_dict[i[index]]
-        if(not np.isnan(item).any()):
-            if(len(item)==2):
-                folium.Circle(radius=10,location=item,popup=str(i[index]),color=color,fill=False).add_to(map)
-            else:
-                print("Sensor without lat and lon -> "+str(i[index]))
+	conn.close()
+
+def put_sensors(cur,map,index,color='red'):
+	for i in tqdm(cur.fetchall()):
+		item=sensor_dict[i[index]]
+		if(not np.isnan(item).any()):
+			if(len(item)==2):
+				folium.Circle(radius=10,location=item,popup=str(i[index]),color=color,fill=False).add_to(map)
+			else:
+				print("Sensor without lat and lon -> "+str(i[index]))
 
 
 def map_sensors_by_stats(year):
-    map_osm = make_map_paris()
-    capteur_broken(year)
-    feat_group1 = folium.FeatureGroup(name="Capteurs hors services(Aucune valeurs sur 70% des example)")
-    put_sensors(feat_group1,0,'red')
-    capteur_without_taux_occ(year)
-    feat_group2 =  folium.FeatureGroup(name="Capteurs sans taux d'occupation 70% du temps.")
-    put_sensors(feat_group2,0,'purple')
-    sensor_with_all_data(year)
-    feat_group3 =  folium.FeatureGroup(name="Cateurs avec debit et taux d'occupation 70% du temps")
-    put_sensors(feat_group3,1,'green')
-    map_osm.add_child(feat_group1)
-    map_osm.add_child(feat_group2)
-    map_osm.add_child(feat_group3)
-    map_osm.add_child(folium.LayerControl())
-    map_osm.save("map_sensors_by_stats_"+year+".html")
 
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
+
+	map_osm = make_map_paris()
+	strQuery = capteur_broken(year)
+	cur.execute(strQuery)
+	feat_group1 = folium.FeatureGroup(name="Capteurs hors services(Aucune valeurs sur 70% des example)")
+	put_sensors(cur,feat_group1,0,'red')
+
+	strQuery = capteur_without_taux_occ(year)
+	cur.execute(strQuery)
+	feat_group2 =  folium.FeatureGroup(name="Capteurs sans taux d'occupation 70% du temps.")
+	put_sensors(cur,feat_group2,0,'purple')
+
+	strQuery = sensor_with_all_data(year)
+	cur.execute(strQuery)
+	feat_group3 =  folium.FeatureGroup(name="Cateurs avec debit et taux d'occupation 70% du temps")
+	put_sensors(cur,feat_group3,1,'green')
+
+	map_osm.add_child(feat_group1)
+	map_osm.add_child(feat_group2)
+	map_osm.add_child(feat_group3)
+	map_osm.add_child(folium.LayerControl())
+	map_osm.save("map_sensors_by_stats_"+year+".html")
+
+	conn.close()
 	
 
 def getAveragePonderate(list):
@@ -372,7 +394,9 @@ def getColor(value):
 
 
 def AverageDayMap(year,numberWeek , dayNumber):
-	map_osm = make_map_paris()
+	
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
 	strQuery = allDataFromDate(year,numberWeek,dayNumber)
 	cur.execute(strQuery)
 
@@ -401,6 +425,8 @@ def AverageDayMap(year,numberWeek , dayNumber):
 	valueItem = getAveragePonderate(listValues)
 	list_Item_AverageValues.append((id_arc,item,valueItem))
 	
+
+	map_osm = make_map_paris()
 	for i in tqdm(list_Item_AverageValues , desc='AverageDayMap'):
 		id_arc = i[0]
 		item = i[1]
@@ -412,18 +438,18 @@ def AverageDayMap(year,numberWeek , dayNumber):
 				folium.Circle(radius=10,location=item,popup=str(id_arc),color=color,fill=False).add_to(map_osm)
 	map_osm.save('AverageDayMap.html')
 	
+def map_sensor_with_all_data():
+	sensor_with_all_data_AllYears()
+	make_map_from_request('map_sensor_with_all_data.html',1)
+
 
 
 AverageDayMap(2013,2,4)
-
-#KmeansFromRequest('map_sensor_with_all_data.html',1,50)
-
+#KmeansFromRequest('map_sensor_Kmeans.html',1,50)
 #createHTML_MATRIX()
-#map_sensor_without_taux_occ()
 #map_sensor_with_taux_occ_bigger_than_100()
+#map_sensors_by_stats('2013')
 #map_sensor_with_all_data()
-#map_sensors_by_stats('2015')
-
 
 #if __name__ == '__main__':
 #map_all_sensor()
