@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+import sys
+
 def two_scales(ax1, ax2,time, data1, data2):
 	ax1.plot(time, data1, color='red')
 	ax1.set_xlabel('Time (day)')
@@ -9,9 +11,11 @@ def two_scales(ax1, ax2,time, data1, data2):
 	ax2.set_ylabel('taux occ')
 	return ax1, ax2
 
-def plotFile():
+def plotFile(fileName):
 	lines=[]
-	with open("data/average2013.txt") as infile:
+	
+
+	with open("data/average_2013.txt") as infile:
 		for line in infile:
 			line =line.replace("(","")
 			line =line.replace(")","")
@@ -29,8 +33,17 @@ def plotFile():
 	#fig, ax1 = plt.subplots()
 	#ax2 = ax1.twinx()
 	fig, (ax1, ax2) = plt.subplots(2)
-	t = np.arange(1, 365, 1)
+	# replace 365 by 
+	t = np.arange(1, len(debit)+1, 1)
 	two_scales(ax1,ax2, t, debit, taux)
+
+	fig = plt.gcf()
+	fig.canvas.set_window_title(fileName)
 	plt.show()
 
-plotFile()
+fileName="data/average_2013.txt"
+if(len(sys.argv)>1):
+	fileName = 'data/average_'+str(sys.argv[1])+'.txt'
+
+plotFile(fileName)
+
