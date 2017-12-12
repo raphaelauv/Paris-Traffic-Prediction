@@ -17,7 +17,10 @@ def testProba(p):
 
 
 
-def computeProba(p , actualYear, endYear):
+def computeProba(p , actualYear, startYear,endYear):
+	if(startYear==endYear):
+		return p
+
 	interval = (endYear+1) - actualYear
 	div = 2*interval
 	proba = p/div
@@ -32,7 +35,7 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 
 	first=True
 	actualIdYear = startYear
-	actualProba = computeProba(p,actualIdYear,endYear)
+	actualProba = computeProba(p,actualIdYear,startYear,endYear)
 	endedWithBreak=False
 	for i in tqdm(cur.fetchall() , desc='getRandomizedListeFromBd'):
 		
@@ -48,7 +51,7 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 			if(actualIdYear==endYear+1):
 				endedWithBreak=True
 				break
-			actualProba = computeProba(p,actualIdYear,endYear)
+			actualProba = computeProba(p,actualIdYear,startYear,endYear)
 		else:
 			if(random.uniform(0, 1)<actualProba):
 				#print('add -> '+str(i))
@@ -60,6 +63,10 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 
 	return listAllYears
 
+'''
+return a list who each part is a list of values of a year
+years are in order of time
+'''
 def getLisOfList_All_BD(strQuery,p,startYear,endYear):
 	
 	conn = sql.connect(dataBaseName)
@@ -71,7 +78,9 @@ def getLisOfList_All_BD(strQuery,p,startYear,endYear):
 
 	return listOfList
 
-
+'''
+print size of Set of Train and Test
+'''
 def printSets(X_train, X_test, y_train, y_test):
 	print(len(X_train))
 	#print(X_train)
@@ -101,10 +110,10 @@ def getY(X):
 		y.append(getColor(value))
 	return y
 
-def get_train_test_sets(pourcent=0.33):
+def get_train_test_sets(startYear,endYear,proba=0.5,pourcent=0.33):
 	
 	strQuery = sensor_with_all_data_AllYearsNot_NULL()
-	X=getLisOfList_All_BD(strQuery,0.2, 2013,2013)
+	X=getLisOfList_All_BD(strQuery,proba, startYear,endYear)
 	#print(X)
 	flat_X=sum(X, [])
 
@@ -153,8 +162,8 @@ flat_X = [x[1:-2] for x in flat_X]
 print(flat_X)
 '''
 
-X_train, X_test, y_train, y_test=get_train_test_sets()
-printSets(X_train, X_test, y_train, y_test)
+X_train, X_test, y_train, y_test=get_train_test_sets(2013,2013,1)
+#printSets(X_train, X_test, y_train, y_test)
 
 trainDecisionTree(X_train, X_test, y_train, y_test)
 
