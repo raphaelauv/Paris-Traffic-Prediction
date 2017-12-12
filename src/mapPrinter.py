@@ -246,7 +246,7 @@ def AverageDayMap(year,numberWeek , dayNumber):
 		color = getColor(i[2])
 		if(not np.isnan(item).any()):
 			if(len(item)==2):
-				folium.Circle(radius=10,location=item,popup=str(id_arc),color=color,fill=False).add_to(map_osm)
+				folium.Circle(radius=10,location=item,popup=str(id_arc)+' | '+str(i[2]) ,color=color,fill=False).add_to(map_osm)
 	map_osm.save('AverageDayMap.html')
 	
 def map_sensor_with_all_data():
@@ -259,11 +259,11 @@ def map_sensor_with_all_data():
 
 
 
-#AverageDayMap(2013,2,4)
+AverageDayMap(2013,2,4)
 #KmeansFromRequest('map_sensor_Kmeans.html',1,50)
 #createHTML_MATRIX()
 #map_sensor_with_taux_occ_bigger_than_100()
-map_sensors_by_stats('2013')
+#map_sensors_by_stats('2013')
 #map_sensor_with_all_data()
 
 #if __name__ == '__main__':
