@@ -1,4 +1,5 @@
 from comprehension_DS import *
+from sklearn.model_selection import train_test_split
 
 '''
 imperfect solution for Moving average
@@ -66,8 +67,17 @@ def getLisOfList_All_BD(strQuery,p,startYear,endYear):
 
 	return listOfList
 
-strQuery = sensor_with_all_data_AllYearsNot_NULL()
-listOfList = getLisOfList_All_BD(strQuery,0.2, 2013,2017)
 
-for i in range(len(listOfList)):
-	print(len(listOfList[i]))
+def get_train_test_sets(pourcent=0.33):
+    strQuery = sensor_with_all_data_AllYearsNot_NULL()
+    X=getLisOfList_All_BD(strQuery,0.2, 2013,2017)
+    flat_X=sum(X, [])
+    y=range(len(flat_X))
+    return train_test_split(X, y, test_size=pourcent)
+
+X_train, X_test, y_train, y_test=get_train_test_sets()
+
+print(len(X_train))
+print(len(y_train))
+print(len(X_test))
+print(len(y_test))
