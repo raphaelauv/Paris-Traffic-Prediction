@@ -7,7 +7,9 @@ Auvert Raphael - Andres Quiroz
 
 sudo pip3 install pyproj
 
-dot -Tpng tree.dot > output.png
+dot -Tx11 my_dot_file.dot
+
+dot -Tpng my_dot_file.dot > output.png
 
 
 

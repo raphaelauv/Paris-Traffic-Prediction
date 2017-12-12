@@ -114,7 +114,11 @@ def get_train_test_sets(pourcent=0.33):
 	#flat_X = [(3,4),(5,5),(7,8)]
 
 	y=getY(flat_X)
+
+	
+	#remove index BD  , debit , taux_occ
 	flat_X = [x[1:-2] for x in flat_X]
+
 	
 	return train_test_split(flat_X, y, test_size=pourcent)
 
@@ -130,10 +134,12 @@ def trainDecisionTree(X_train, X_test, y_train, y_test):
 	yPredicted = clf.predict(X_test)
 	mapDifferences(X_test,y_test , yPredicted)
 
-
+'''
+create a TreeGraphizc.dot file
+'''
 def getTreeGraphizc(clf):
 	
-	dot_data = tree.export_graphviz(clf, out_file="toto.dot", 
+	dot_data = tree.export_graphviz(clf, out_file="treeGraphizc.dot", 
                          feature_names=['Sensor','Year','Week','Day','Hour'],
                          class_names=['None','Green','Orange','Red','Black'],  
                          filled=True, rounded=True,  
