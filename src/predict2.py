@@ -115,7 +115,7 @@ def get_train_test_sets(pourcent=0.33):
 
 	y=getY(flat_X)
 	flat_X = [x[1:-2] for x in flat_X]
-	print(flat_X)
+	
 	return train_test_split(flat_X, y, test_size=pourcent)
 
 def trainDecisionTree(X_train, X_test, y_train, y_test):
