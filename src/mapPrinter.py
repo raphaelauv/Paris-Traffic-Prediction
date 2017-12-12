@@ -4,9 +4,13 @@
 '''
 from mapFunction import *
 
-
+'''
+create an HTML map of a Query 
+index is position of Id_arc in the Query result
+'''
 def make_map_from_request(cur,name,index,color_='crimson',save=True):
 	map_osm = make_map_paris()
+	sensor_dict=modeDict()
 	for i in tqdm(cur.fetchall() , desc=name):
 		item=sensor_dict[i[index]]
 		if(not np.isnan(item).any()):
@@ -29,6 +33,11 @@ def createOSMObjectArray(ArrayOfitem):
 	return out
 	
 
+def putToMapOSM(arrayOfItems,map_osm):
+	for i in arrayOfItems:
+		i.add_to(map_osm)
+
+
 from concurrent import futures
 import multiprocessing
 def emptyListFuturs(listOfFuturs,map_osm):
@@ -45,6 +54,7 @@ def map_all_sensor():
 	
 	listOfFuturs=[]
 	map_osm = make_map_paris()
+	sensor_dict=modeDict()
 	arrayOfItems=[]
 	cmp=0
 	cmpJ=0
@@ -130,16 +140,15 @@ def plotKMeansMatrix():
 	plt.show()
 	
 
-
-
-
-def KmeansFromRequest(name,index,k):
-	import numpy as np
+'''
+create an HTML file or plot the kmeans for a gived cursor on a Query
+k number of clusters
+index posiition of id of sensor in the quuery result
+'''
+def KmeansFromRequest(cur,name,index,k,modeHTML=True):
 	
-	conn = sql.connect(dataBaseName)
-	cur = conn.cursor()
-	strQuery = sensor_with_all_data_AllYears()
-	cur.execute(strQuery)
+	
+	sensor_dict=modeDict()
 	
 	from pyproj import Proj
 	#transformation should be done here
@@ -158,13 +167,27 @@ def KmeansFromRequest(name,index,k):
 
 	npallItems= np.array(allItems)
 	x, y = kmeans2(whiten(npallItems), k, iter = 10)
-	
-	createHTMLfromClustering(npallItems,x,y,name)
-	#plotFromClustering(npallItems,x,y)
+	if(modeHTML):
+		createHTMLfromClustering(npallItems,x,y,name)
+	else:
+		plotFromClustering(npallItems,x,y)
 
+	
+
+
+
+def Kmeans_Of_sensor_with_all_data_AllYears():
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
+	strQuery = sensor_with_all_data_AllYears()
+	cur.execute(strQuery)
+	KmeansFromRequest(cur,'map_sensor_Kmeans.html',1,50,True)
 	conn.close()
 
-def put_sensors(cur,group,index,color='red'):
+'''
+put inside the gived group all the sensors of the curr (cursor on query)
+'''
+def put_sensors(sensor_dict,cur,group,index,color='red'):
 	for i in tqdm(cur.fetchall()):
 		item=sensor_dict[i[index]]
 		if(not np.isnan(item).any()):
@@ -174,26 +197,32 @@ def put_sensors(cur,group,index,color='red'):
 				print("Sensor without lat and lon -> "+str(i[index]))
 
 
+'''
+create HTML file of stats of data of the year gived
+sensor_broken
+sensor_without_taux_occ
+sensor_with_all_data
+'''
 def map_sensors_by_stats(year):
 	map_osm = make_map_paris()
-
+	sensor_dict=modeDict()
 	conn = sql.connect(dataBaseName)
 	cur = conn.cursor()
 
 	strQuery = capteur_broken(year)
 	cur.execute(strQuery)
 	feat_group1 = folium.FeatureGroup(name="Capteurs hors services(Aucune valeurs sur 70% des example)")
-	put_sensors(cur,feat_group1,0,'red')
+	put_sensors(sensor_dict,cur,feat_group1,0,'red')
 
 	strQuery = capteur_without_taux_occ(year)
 	cur.execute(strQuery)
 	feat_group2 =  folium.FeatureGroup(name="Capteurs sans taux d'occupation 70% du temps.")
-	put_sensors(cur,feat_group2,0,'purple')
+	put_sensors(sensor_dict,cur,feat_group2,0,'purple')
 
 	strQuery = sensor_with_all_data(year)
 	cur.execute(strQuery)
 	feat_group3 =  folium.FeatureGroup(name="Cateurs avec debit et taux d'occupation 70% du temps")
-	put_sensors(cur,feat_group3,1,'green')
+	put_sensors(sensor_dict,cur,feat_group3,1,'green')
 
 	map_osm.add_child(feat_group1)
 	map_osm.add_child(feat_group2)
@@ -203,13 +232,16 @@ def map_sensors_by_stats(year):
 
 	conn.close()
 
-
+'''
+create an HTML file of the traffic of a gived day ( Average Ponderate )
+'''
 def AverageDayMap(year,numberWeek , dayNumber):
 	
 	conn = sql.connect(dataBaseName)
 	cur = conn.cursor()
 	strQuery = allDataFromDate(year,numberWeek,dayNumber)
 	cur.execute(strQuery)
+	sensor_dict=modeDict()
 
 	id_arc = 0
 	first=True
@@ -249,6 +281,7 @@ def AverageDayMap(year,numberWeek , dayNumber):
 				folium.Circle(radius=10,location=item,popup=str(id_arc)+' | '+str(i[2]) ,color=color,fill=False).add_to(map_osm)
 	map_osm.save('AverageDayMap.html')
 	
+
 def map_sensor_with_all_data():
 	conn = sql.connect(dataBaseName)
 	cur = conn.cursor()
@@ -257,14 +290,16 @@ def map_sensor_with_all_data():
 	make_map_from_request(cur,'map_sensor_with_all_data.html',1)
 	conn.close()
 
-
+'''
+create an html file of the correct and less corred sensors predicted by ta model
+'''
 def mapDifferences(x,y,predictedY):
 	from collections import defaultdict
 	dicoFrequencyGoodAndFalse = defaultdict(lambda :(0,0))
 
 	index=0
 	cmp=0
-	for i in tqdm(x,desc='mapDifferences'):
+	for i in tqdm(x,desc='mapDifferences 1/2'):
 		nbSensor = i[index]
 		lastTuple =dicoFrequencyGoodAndFalse[nbSensor]
 		if(y[cmp]==predictedY[cmp]):
@@ -277,38 +312,41 @@ def mapDifferences(x,y,predictedY):
 
 
 	map_osm = make_map_paris()
-
-	
-	feat_group1 =  folium.FeatureGroup(name="Sensor with more than 50% of good predictions")
-	feat_group2 =  folium.FeatureGroup(name="Sensor with less than 50% of good predictions")
-	
-
+	sensor_dict=modeDict()
+	feat_group1 =  folium.FeatureGroup(name="Sensor with more than 80% of good predictions")
+	feat_group2 =  folium.FeatureGroup(name="Sensor with more than 60% of good predictions")
+	feat_group3 =  folium.FeatureGroup(name="Sensor with more than 40% of good predictions")
+	feat_group4 =  folium.FeatureGroup(name="Sensor with less than 40% of good predictions")
 	cmp=0
 
-
-
-	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items()):
+	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc='mapDifferences 1/2'):
 		item=sensor_dict[id]
 
 		nbGoodValues = float(tupleValues[0]/(tupleValues[0]+tupleValues[1]))
 
 		if(not np.isnan(item).any()):
 			if(len(item)==2):
-				if(nbGoodValues>0.5):
+				if(nbGoodValues>0.8):
 					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#008000',fill=False).add_to(feat_group1)
+				elif(nbGoodValues>0.6):
+					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#FFFF00',fill=False).add_to(feat_group2)
+				elif(nbGoodValues>0.4):
+					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#FF0000',fill=False).add_to(feat_group3)
 				else:
-					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#FF0000',fill=False).add_to(feat_group2)
+					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#000000',fill=False).add_to(feat_group4)
 			else:
 				print("Sensor without lat and lon -> "+str(i[index]))
 
 		cmp+=1
 	map_osm.add_child(feat_group1)
 	map_osm.add_child(feat_group2)
+	map_osm.add_child(feat_group3)
+	map_osm.add_child(feat_group4)
 	map_osm.add_child(folium.LayerControl())
 	map_osm.save('DecisionTreeDifference.html')
 
 #AverageDayMap(2013,2,4)
-#KmeansFromRequest('map_sensor_Kmeans.html',1,50)
+#Kmeans_Of_sensor_with_all_data_AllYears()
 #createHTML_MATRIX()
 #map_sensor_with_taux_occ_bigger_than_100()
 #map_sensors_by_stats('2013')

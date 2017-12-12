@@ -12,6 +12,9 @@ import time
 from datetime import datetime
 from comprehension_DS import *
 
+'''
+return a tuple of (lat,long) from a string
+'''
 def c_geo_point_2d_FLOAT(x):
 	out = []
 	for i in x.split(','):
@@ -23,7 +26,7 @@ def c_geo_point_2d_FLOAT(x):
 	return out
 
 '''
-return a dictionnary
+return a dictionnary of key Id_censor  and values (Lat,Log)
 '''
 def modeDict():
 	converters = {'geo_point_2d':c_geo_point_2d_FLOAT }
@@ -44,18 +47,19 @@ def modeDict():
 	return posdict
 
 
-sensor_dict=modeDict()
-
 '''
-get image of paris
+return the folium Map object on the map of paris
 '''
 def make_map_paris():
 	return folium.Map(location=[48.85, 2.34] , tiles='Stamen Terrain' , zoom_start=12)
 
 
-
+'''
+create a map from a gived cursor of a query
+'''
 def make_map_from_request(cur,name,index,color_='crimson',save=True):
 	map_osm = make_map_paris()
+	sensor_dict=modeDict()
 	for i in tqdm(cur.fetchall() , desc=name):
 		item=sensor_dict[i[index]]
 		if(not np.isnan(item).any()):
@@ -66,16 +70,9 @@ def make_map_from_request(cur,name,index,color_='crimson',save=True):
 	if(save):
 		map_osm.save(name)
 
-
-
-
-
-def putToMapOSM(arrayOfItems,map_osm):
-	for i in arrayOfItems:
-		i.add_to(map_osm)
-
-
-
+'''
+return a matric of size div*div from UpLeft and DownRight filled with GPS positions
+'''
 def getMatrix(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
 	diffLat = abs(latUpLeft - latDownRight)
 	diffLon = abs(lonUpLeft - lonDownRight)
@@ -100,6 +97,9 @@ def getMatrix(latUpLeft , lonUpLeft , latDownRight , lonDownRight, div):
 
 	return matrix
 
+'''
+print the content of the matrix of size div*div
+'''
 def printMatrix(matrix,div):
 	for i in range(0,div):
 		for j in range(0,div):
@@ -171,6 +171,9 @@ def createHTMLfromClustering(npallItems,x,y,name):
 	map_osm.save(name)
 
 
+'''
+plot the list of tuple (lat,long) of cluster y
+'''
 def plotFromClustering(npallItems,x,y):
 
 	import matplotlib.pyplot as plt
@@ -179,6 +182,7 @@ def plotFromClustering(npallItems,x,y):
 	plt.rcParams['figure.figsize'] = (16, 9)
 	plt.style.use('ggplot')
 	plt.scatter(npallItems[:,0], npallItems[:,1], c=y, alpha=1 , marker="o", label='points');
+
 	correctedX0 = [x/1000 for x in x[:,0] ]
 	correctedX1 = [x for x in x[:,1] ]
 	correctedX0= np.array(correctedX0)
@@ -188,7 +192,9 @@ def plotFromClustering(npallItems,x,y):
 	plt.show()
 
 	
-
+'''
+return a value of traffic of a gived list who correspond to all data of the day
+'''
 def getAveragePonderate(list):
 	coeff=[1,4,2,4,1]
 	coeffLimit=[7,10,17,21,24]
@@ -230,7 +236,9 @@ def getAveragePonderate(list):
 	finalValue = float(finalValue/sum(coeff))
 	return finalValue
 
-
+'''
+return a color of traffic for a gived value of occupation rate
+'''
 def getColor(value):
 	if(value==0):
 		return '#ADD8E6'
