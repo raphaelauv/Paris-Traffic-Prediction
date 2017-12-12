@@ -235,9 +235,9 @@ def getColor(value):
 	if(value==0):
 		return '#ADD8E6'
 	if(value<5):
-		return '#FFFF00'
-	elif(value<7):
 		return '#008000'
+	elif(value<7):
+		return '#FFFF00'
 	elif(value<12):
 		return '#FF0000'
 	return '#000000'

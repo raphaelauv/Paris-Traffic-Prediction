@@ -258,8 +258,56 @@ def map_sensor_with_all_data():
 	conn.close()
 
 
+def mapDifferences(x,y,predictedY):
+	from collections import defaultdict
+	dicoFrequencyGoodAndFalse = defaultdict(lambda :(0,0))
 
-AverageDayMap(2013,2,4)
+	index=0
+	cmp=0
+	for i in tqdm(x,desc='mapDifferences'):
+		nbSensor = i[index]
+		lastTuple =dicoFrequencyGoodAndFalse[nbSensor]
+		if(y[cmp]==predictedY[cmp]):
+			lastTuple=(lastTuple[0]+1,lastTuple[1])
+		else:
+			lastTuple=(lastTuple[0],lastTuple[1]+1)
+		dicoFrequencyGoodAndFalse[nbSensor]=lastTuple
+		cmp+=1
+
+
+
+	map_osm = make_map_paris()
+
+	
+	feat_group1 =  folium.FeatureGroup(name="Sensor with more than 50% of good predictions")
+	feat_group2 =  folium.FeatureGroup(name="Sensor with less than 50% of good predictions")
+	
+
+	cmp=0
+
+
+
+	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items()):
+		item=sensor_dict[id]
+
+		nbGoodValues = float(tupleValues[0]/(tupleValues[0]+tupleValues[1]))
+
+		if(not np.isnan(item).any()):
+			if(len(item)==2):
+				if(nbGoodValues>0.5):
+					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#008000',fill=False).add_to(feat_group1)
+				else:
+					folium.Circle(radius=10,location=item,popup=str(i[index]),color='#FF0000',fill=False).add_to(feat_group2)
+			else:
+				print("Sensor without lat and lon -> "+str(i[index]))
+
+		cmp+=1
+	map_osm.add_child(feat_group1)
+	map_osm.add_child(feat_group2)
+	map_osm.add_child(folium.LayerControl())
+	map_osm.save('DecisionTreeDifference.html')
+
+#AverageDayMap(2013,2,4)
 #KmeansFromRequest('map_sensor_Kmeans.html',1,50)
 #createHTML_MATRIX()
 #map_sensor_with_taux_occ_bigger_than_100()

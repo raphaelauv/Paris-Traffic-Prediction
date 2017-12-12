@@ -118,12 +118,17 @@ def get_train_test_sets(pourcent=0.33):
 	
 	return train_test_split(flat_X, y, test_size=pourcent)
 
+from mapPrinter import *
+
 def trainDecisionTree(X_train, X_test, y_train, y_test):
 	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=7, min_samples_leaf=5)
 	clf = clf.fit(X_train, y_train);
 	score = clf.score(X_test, y_test);
 	print(score)
 	getTreeGraphizc(clf)
+
+	yPredicted = clf.predict(X_test)
+	mapDifferences(X_test,y_test , yPredicted)
 
 
 def getTreeGraphizc(clf):
