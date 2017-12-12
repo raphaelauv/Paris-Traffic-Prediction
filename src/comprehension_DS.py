@@ -32,6 +32,9 @@ def calcul_correlation():
     print(np.corrcoef(debit,taux_occ)[0][1])
     conn.close()
 
+def sensor_with_all_data_AllYearsNot_NULL():
+    return 'SELECT * FROM test WHERE taux_occ IS NOT NULL AND debit IS NOT NULL ORDER BY year'
+
 def sensor_with_all_data_AllYears():
     return 'SELECT * FROM test WHERE taux_occ IS NOT NULL AND debit IS NOT NULL GROUP BY id_arc_trafics'
 
