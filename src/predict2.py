@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.datasets import load_iris
 from sklearn import tree
-
+import graphviz
 '''
 imperfect solution for Moving average
 '''
@@ -115,18 +115,26 @@ def get_train_test_sets(pourcent=0.33):
 
 	y=getY(flat_X)
 	flat_X = [x[1:-2] for x in flat_X]
+	print(flat_X)
 	return train_test_split(flat_X, y, test_size=pourcent)
 
 def trainDecisionTree(X_train, X_test, y_train, y_test):
-	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=10, min_samples_leaf=5)
-	
-	clf.fit(X_train, y_train);
+	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=7, min_samples_leaf=5)
+	clf = clf.fit(X_train, y_train);
 	score = clf.score(X_test, y_test);
 	print(score)
+	getTreeGraphizc(clf)
 
-	iris = load_iris()
-	clf = clf.fit(iris.data, iris.target)
-	tree.export_graphviz(clf,out_file='tree.dot')  
+
+def getTreeGraphizc(clf):
+	
+	dot_data = tree.export_graphviz(clf, out_file="toto.dot", 
+                         #feature_names=iris.feature_names,  
+                         #class_names=iris.target_names,  
+                         filled=True, rounded=True,  
+                         special_characters=True) 
+	#graph = graphviz.Source(dot_data)  
+	
 
 '''
 flat_X = [(3,4,10,20),(3,4,10,20),(3,4,10,20)]

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 import sys
 
-def two_scales(ax1, ax2,time, data1, data2):
+def two_scales(ax1, ax2,time, data1, data2 ,):
 	ax1.plot(time, data1, color='red')
 	ax1.set_xlabel('Time (day)')
 	ax1.set_ylabel('debit')
@@ -15,7 +15,7 @@ def plotFile(fileName):
 	lines=[]
 	
 
-	with open("data/average_2013.txt") as infile:
+	with open(fileName) as infile:
 		for line in infile:
 			line =line.replace("(","")
 			line =line.replace(")","")
