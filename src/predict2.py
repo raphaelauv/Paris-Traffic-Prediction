@@ -134,8 +134,8 @@ def trainDecisionTree(X_train, X_test, y_train, y_test):
 def getTreeGraphizc(clf):
 	
 	dot_data = tree.export_graphviz(clf, out_file="toto.dot", 
-                         #feature_names=iris.feature_names,  
-                         #class_names=iris.target_names,  
+                         feature_names=['Sensor','Year','Week','Day','Hour'],
+                         class_names=['None','Green','Orange','Red','Black'],  
                          filled=True, rounded=True,  
                          special_characters=True) 
 	#graph = graphviz.Source(dot_data)  
