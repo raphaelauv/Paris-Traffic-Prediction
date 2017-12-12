@@ -7,6 +7,9 @@ Auvert Raphael - Andres Quiroz
 
 sudo pip3 install pyproj
 
+dot -Tpng tree.dot > output.png
+
+
 
 python3 plotFileAverage.py 2013
 python3 plotFileAverage.py 2014

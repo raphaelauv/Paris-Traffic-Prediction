@@ -1,5 +1,9 @@
 from comprehension_DS import *
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.datasets import load_iris
+from sklearn import tree
 
 '''
 imperfect solution for Moving average
@@ -63,21 +67,75 @@ def getLisOfList_All_BD(strQuery,p,startYear,endYear):
 	cur.execute(strQuery)
 
 	listOfList = getRandomizedListeFromBd(cur,p ,startYear,endYear )
-	#conn.close()
+	conn.close()
 
 	return listOfList
 
 
+def printSets(X_train, X_test, y_train, y_test):
+	print(len(X_train))
+	#print(X_train)
+	print(len(y_train))
+	#print(y_train)
+	print(len(X_test))
+	#print(X_test)
+	print(len(y_test))
+	#print(y_test)
+
+def getColor(value):
+	if(value==0):
+		return 0
+	if(value<5):
+		return 1
+	elif(value<7):
+		return 2
+	elif(value<12):
+		return 3
+	return 4
+
+def getY(X):
+	y=[]
+	for i in range(len(X)):
+		value = (X[i])[7]
+		#print(getColor(value))
+		y.append(getColor(value))
+	return y
+
 def get_train_test_sets(pourcent=0.33):
-    strQuery = sensor_with_all_data_AllYearsNot_NULL()
-    X=getLisOfList_All_BD(strQuery,0.2, 2013,2017)
-    flat_X=sum(X, [])
-    y=range(len(flat_X))
-    return train_test_split(X, y, test_size=pourcent)
+	
+	strQuery = sensor_with_all_data_AllYearsNot_NULL()
+	X=getLisOfList_All_BD(strQuery,0.2, 2013,2013)
+	#print(X)
+	flat_X=sum(X, [])
+
+	print('size SET -> '+str(len(X[0])))
+	#print(flat_X)
+	#print('size list flatted '+str(len(flat_X)))
+	#flat_X = [(3,4),(5,5),(7,8)]
+
+	y=getY(flat_X)
+	flat_X = [x[1:-2] for x in flat_X]
+	return train_test_split(flat_X, y, test_size=pourcent)
+
+def trainDecisionTree(X_train, X_test, y_train, y_test):
+	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=10, min_samples_leaf=5)
+	
+	clf.fit(X_train, y_train);
+	score = clf.score(X_test, y_test);
+	print(score)
+
+	iris = load_iris()
+	clf = clf.fit(iris.data, iris.target)
+	tree.export_graphviz(clf,out_file='tree.dot')  
+
+'''
+flat_X = [(3,4,10,20),(3,4,10,20),(3,4,10,20)]
+flat_X = [x[1:-2] for x in flat_X] 
+print(flat_X)
+'''
 
 X_train, X_test, y_train, y_test=get_train_test_sets()
+printSets(X_train, X_test, y_train, y_test)
 
-print(len(X_train))
-print(len(y_train))
-print(len(X_test))
-print(len(y_test))
+trainDecisionTree(X_train, X_test, y_train, y_test)
+
