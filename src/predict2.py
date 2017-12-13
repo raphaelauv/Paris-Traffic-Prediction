@@ -30,19 +30,26 @@ def computeProba(p , actualYear, startYear,endYear):
 import random
 def getRandomizedListeFromBd(cur,p,startYear,endYear):
 
-	listAllYears=[]
+	#listAllYears=[]
 	actualList = []
 
-	first=True
-	actualIdYear = startYear
-	actualProba = computeProba(p,actualIdYear,startYear,endYear)
+	#first=True
+	#actualIdYear = startYear
+	#actualProba = computeProba(p,actualIdYear,startYear,endYear)
+
+	listOfProba=[]
+	for i in range(startYear,endYear+1):
+		actualProba = computeProba(p,i,startYear,endYear)
+		listOfProba.append(actualProba)
+		print('proba '+str(i)+' '+str(actualProba))
+
 	endedWithBreak=False
 	for i in tqdm(cur.fetchall() , desc='getRandomizedListeFromBd'):
 		
 		#print('i ->' +str(i))
 		
 		year = i[2]
-		
+		'''
 		if(year > actualIdYear):
 			
 			listAllYears.append(actualList)
@@ -53,15 +60,16 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 				break
 			actualProba = computeProba(p,actualIdYear,startYear,endYear)
 		else:
-			if(random.uniform(0, 1)<actualProba):
+		'''
+		if(random.uniform(0, 1)<listOfProba[year-startYear]):
 				#print('add -> '+str(i))
 				#print()
-				actualList.append(i)
-	
+			actualList.append(i)
+	'''
 	if(not endedWithBreak):
 		listAllYears.append(actualList)
-
-	return listAllYears
+	'''
+	return actualList
 
 '''
 return a list who each part is a list of values of a year
@@ -114,17 +122,17 @@ def get_train_test_sets(startYear,endYear,proba=0.5,pourcent=0.33):
 	
 	strQuery = sensor_with_all_data_AllYearsNot_NULL()
 	X=getLisOfList_All_BD(strQuery,proba, startYear,endYear)
-	#print(X)
-	flat_X=sum(X, [])
 
-	print('size SET -> '+str(len(X[0])))
-	#print(flat_X)
-	#print('size list flatted '+str(len(flat_X)))
-	#flat_X = [(3,4),(5,5),(7,8)]
+	#flat_X=sum(X, []) no more necesary
+	flat_X=X
 
+	print('size SET -> '+str(len(flat_X)))
+
+	#print('size SET -> '+str(len(X[0])))
+	
 	y=getY(flat_X)
 
-	
+	print("clusters finded")
 	#remove index BD  , debit , taux_occ
 	flat_X = [x[1:-2] for x in flat_X]
 
@@ -162,7 +170,7 @@ flat_X = [x[1:-2] for x in flat_X]
 print(flat_X)
 '''
 
-X_train, X_test, y_train, y_test=get_train_test_sets(2013,2013,1)
+X_train, X_test, y_train, y_test=get_train_test_sets(2013,2017,1)
 #printSets(X_train, X_test, y_train, y_test)
 
 trainDecisionTree(X_train, X_test, y_train, y_test)

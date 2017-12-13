@@ -319,7 +319,7 @@ def mapDifferences(x,y,predictedY):
 	feat_group4 =  folium.FeatureGroup(name="Sensor with less than 40% of good predictions")
 	cmp=0
 
-	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc='mapDifferences 1/2'):
+	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc='mapDifferences 2/2'):
 		item=sensor_dict[id]
 
 		nbGoodValues = float(tupleValues[0]/(tupleValues[0]+tupleValues[1]))
