@@ -4,6 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.datasets import load_iris
 from sklearn import tree
+from sklearn import metrics
 import graphviz
 '''
 imperfect solution for Moving average
@@ -180,7 +181,7 @@ def trainDecisionTree(X_train, X_test, y_train, y_test,outputFiles=False):
 	print("start decision")
 	clf = clf.fit(X_train, y_train);
 	score = clf.score(X_test, y_test);
-	print(score)
+	print('DecisionTree score : '+str(score))
 
 	if(outputFiles):
 		getTreeGraphizc(clf)
@@ -203,6 +204,7 @@ def getTreeGraphizc(clf):
 
 '''
 create an HTML file of the futur prediction of the month of november
+and print the acuracy of the prediction
 '''
 def testTreeOnNovembre2017(clf):
 	strQuery = sensor_with_all_data_Not_NULL_Nov2017()
@@ -212,6 +214,10 @@ def testTreeOnNovembre2017(clf):
 	x_listNovember2017 = [x[1:-2] for x in x_listNovember2017]
 
 	yPredicted = clf.predict(x_listNovember2017)
+
+	novemberAccuracy = metrics.accuracy_score(y_listNovember2017,yPredicted)
+	print('novemberAccuracy : '+str(novemberAccuracy))
+
 	mapDifferences('november',x_listNovember2017,y_listNovember2017 , yPredicted)
 
 '''
