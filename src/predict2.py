@@ -16,8 +16,11 @@ def testProba(p):
 	print('val -> '+str(l))
 
 
-
+'''
+compute the probabilty to apply to a gived year depending of the size of the set and the global probability asked: p
+'''
 def computeProba(p , actualYear, startYear,endYear):
+	#return p
 	if(startYear==endYear):
 		return p
 
@@ -106,6 +109,9 @@ def printSets(X_train, X_test, y_train, y_test):
 	print(len(y_test))
 	#print(y_test)
 
+'''
+arbitrary clusters
+'''
 def getColor(value):
 	if(value==0):
 		return 0
@@ -117,6 +123,9 @@ def getColor(value):
 		return 3
 	return 4
 
+'''
+return list of corresponding clusters of the list X
+'''
 def getY(X):
 	y=[]
 	for i in range(len(X)):
@@ -125,10 +134,13 @@ def getY(X):
 		y.append(getColor(value))
 	return y
 
+'''
+return a list of values from a query with a p probability
+'''
 def getListOfDataFromQuery(query,p=0.5,name='query'):
 	conn = sql.connect(dataBaseName)
 	cur = conn.cursor()
-	cur.execute(strQuery)
+	cur.execute(query)
 
 	listOfData= []
 	for i in tqdm(cur.fetchall() , desc=name):
@@ -139,6 +151,11 @@ def getListOfDataFromQuery(query,p=0.5,name='query'):
 	conn.close()
 	return listOfData
 
+'''
+get data from the query and produce a train and test set
+p is the global probability of piking a raw of a query
+pourcent is the repartion between the train and test set
+'''
 def get_train_test_sets(strQuery ,startYear,endYear,proba=0.5,pourcent=0.33):
 	X=getLisOf_All_BD(strQuery,proba, startYear,endYear)
 
@@ -151,18 +168,25 @@ def get_train_test_sets(strQuery ,startYear,endYear,proba=0.5,pourcent=0.33):
 	X = [x[1:-2] for x in X]
 	return train_test_split(X, y, test_size=pourcent)
 
+
+'''
+return a decisionTree fited with the arguments
+and print a score
+outputFile create a graphizv file and a html represention of the differences between the testSet and Predicted values of TestSet
+'''
 from mapPrinter import *
-def trainDecisionTree(X_train, X_test, y_train, y_test):
+def trainDecisionTree(X_train, X_test, y_train, y_test,outputFiles=False):
 	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=7, min_samples_leaf=5)
 	print("start decision")
 	clf = clf.fit(X_train, y_train);
 	score = clf.score(X_test, y_test);
 	print(score)
-	'''
-	getTreeGraphizc(clf)
-	yPredicted = clf.predict(X_test)
-	mapDifferences('treeDecision'X_test,y_test , yPredicted)
-	'''
+
+	if(outputFiles):
+		getTreeGraphizc(clf)
+		yPredicted = clf.predict(X_test)
+		mapDifferences('treeDecision',X_test,y_test , yPredicted)
+	
 	return clf
 
 '''
@@ -177,7 +201,9 @@ def getTreeGraphizc(clf):
                          special_characters=True) 
 	#graph = graphviz.Source(dot_data)  
 
-
+'''
+create an HTML file of the futur prediction of the month of november
+'''
 def testTreeOnNovembre2017(clf):
 	strQuery = sensor_with_all_data_Not_NULL_Nov2017()
 	x_listNovember2017 = getListOfDataFromQuery(strQuery,0.5,'november 2017')
@@ -188,12 +214,16 @@ def testTreeOnNovembre2017(clf):
 	yPredicted = clf.predict(x_listNovember2017)
 	mapDifferences('november',x_listNovember2017,y_listNovember2017 , yPredicted)
 
-
+'''
+Create decision tree fit with all data without month of novemeber of 2017
+and call the function testTreeOnNovembre2017()
+'''
+def analysePredictionNovember():
+	strQuery = sensor_with_all_data_AllYearsNot_NULL_notNov2017()
+	X_train, X_test, y_train, y_test=get_train_test_sets(strQuery ,2017,2017,0.7)
+	clf = trainDecisionTree(X_train, X_test, y_train, y_test)
+	testTreeOnNovembre2017(clf)
 
 #strQuery = sensor_with_all_data_AllYearsNot_NULL()
-strQuery = sensor_with_all_data_AllYearsNot_NULL_notNov2017()
-X_train, X_test, y_train, y_test=get_train_test_sets(strQuery ,2017,2017,0.7)
+analysePredictionNovember()
 
-clf = trainDecisionTree(X_train, X_test, y_train, y_test)
-
-testTreeOnNovembre2017(clf)

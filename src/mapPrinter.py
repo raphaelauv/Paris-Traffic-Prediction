@@ -213,17 +213,17 @@ def map_sensors_by_stats(year):
 
 	strQuery = capteur_broken(year)
 	cur.execute(strQuery)
-	feat_group1 = folium.FeatureGroup(name="Capteurs hors services(Aucune valeurs sur 70% des example)")
+	feat_group1 = folium.FeatureGroup(name="RED Capteurs hors services(Aucune valeurs sur 70% des example)")
 	put_sensors(sensor_dict,cur,feat_group1,0,'red')
 
 	strQuery = capteur_without_taux_occ(year)
 	cur.execute(strQuery)
-	feat_group2 =  folium.FeatureGroup(name="Capteurs sans taux d'occupation 70% du temps.")
+	feat_group2 =  folium.FeatureGroup(name="PURPLE Capteurs sans taux d'occupation 70% du temps.")
 	put_sensors(sensor_dict,cur,feat_group2,0,'purple')
 
 	strQuery = sensor_with_all_data(year)
 	cur.execute(strQuery)
-	feat_group3 =  folium.FeatureGroup(name="Cateurs avec debit et taux d'occupation 70% du temps")
+	feat_group3 =  folium.FeatureGroup(name="GREEN Cateurs avec debit et taux d'occupation 70% du temps")
 	put_sensors(sensor_dict,cur,feat_group3,1,'green')
 
 	map_osm.add_child(feat_group1)
@@ -319,10 +319,10 @@ def mapDifferences(name,x,y,predictedY):
 
 	map_osm = make_map_paris()
 	sensor_dict=modeDict()
-	feat_group1 =  folium.FeatureGroup(name="Sensor with more than 80% of good predictions")
-	feat_group2 =  folium.FeatureGroup(name="Sensor with more than 60% of good predictions")
-	feat_group3 =  folium.FeatureGroup(name="Sensor with more than 40% of good predictions")
-	feat_group4 =  folium.FeatureGroup(name="Sensor with less than 40% of good predictions")
+	feat_group1 =  folium.FeatureGroup(name="GREEN Sensor with more than 80% of good predictions")
+	feat_group2 =  folium.FeatureGroup(name="YELLOW Sensor with more than 60% of good predictions")
+	feat_group3 =  folium.FeatureGroup(name="RED Sensor with more than 40% of good predictions")
+	feat_group4 =  folium.FeatureGroup(name="BLACK Sensor with less than 40% of good predictions")
 	cmp=0
 
 	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc=name+'mapDifferences 2/2'):

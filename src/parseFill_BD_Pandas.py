@@ -100,11 +100,11 @@ def putToDB(chunk,conn):
 
 '''
 parse and store to the db all the folders from year : startYear
-exemple : 2013 , 4 , 12
+exemple : 2013 , 4 , 1 ,12
 
 will parse and store the 12 month of year 2013 ,2014 ,2015 and 2016
 '''
-def parseFolderDataTraffic(nameBD,startYear,numberOfYears,numberOfMonth):
+def parseFolderDataTraffic(nameBD,startYear,numberOfYears,startMonth,numberOfMonth):
 
 	strNameFolder = "donnees_trafic_capteurs_"
 
@@ -118,7 +118,7 @@ def parseFolderDataTraffic(nameBD,startYear,numberOfYears,numberOfMonth):
 	executor = futures.ProcessPoolExecutor(max_workers=nbThreads)
 
 	for year in tqdm(range(startYear,startYear+numberOfYears)):
-		for month in tqdm(range(1,numberOfMonth+1)):
+		for month in tqdm(range(startMonth,startMonth+numberOfMonth)):
 			listOfFuturs=[]
 			pathName =getPathFile(strNameFolder ,year ,month)
 			
@@ -135,12 +135,11 @@ def parseFolderDataTraffic(nameBD,startYear,numberOfYears,numberOfMonth):
 				putToDB(fut.result(),conn)
 			conn.commit()
 			
-			
 	conn.close()
 	executor.shutdown()
 
 
 print("\n")
-parseFolderDataTraffic('Blabla.db',2013,1,1)
+parseFolderDataTraffic('Blabla.db',2016,1,1,12)
 print("\n")
-testBD_pandas('Blabla.db')
+#testBD_pandas('Blabla.db')

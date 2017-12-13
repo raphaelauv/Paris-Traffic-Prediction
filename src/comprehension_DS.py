@@ -26,7 +26,7 @@ def showNotNovemnber():
 	cur = conn.cursor()
 	query = sensor_with_all_data_AllYearsNot_NULL_notNov2017()
 	cur.execute(query)
-	for i in cur.fetchall():
+	for i in tqdm(cur.fetchall() , desc='WITHOUT november 2017'):
 		if(i[2]==2017):
 			if(i[3]>43 and i[3]<49):
 				print(i)
@@ -39,7 +39,7 @@ def showNovemnber():
 	cur = conn.cursor()
 	query = sensor_with_all_data_Not_NULL_Nov2017()
 	cur.execute(query)
-	for i in cur.fetchall():
+	for i in tqdm(cur.fetchall() , desc='november 2017'):
 		if(i[3]<44 or i[3]>48):
 			print(i)
 	print('finish')
