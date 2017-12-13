@@ -92,6 +92,7 @@ def map_sensor_with_taux_occ_bigger_than_100():
 	cur.execute(strQuery)
 	make_map_from_request(cur,'map_sensor_with_taux_occ_bigger_than_100.html',1)
 
+	cur.close()
 	conn.close()
 
 
@@ -182,6 +183,7 @@ def Kmeans_Of_sensor_with_all_data_AllYears():
 	strQuery = sensor_with_all_data_AllYears()
 	cur.execute(strQuery)
 	KmeansFromRequest(cur,'map_sensor_Kmeans.html',1,50,True)
+	cur.close()
 	conn.close()
 
 '''
@@ -229,7 +231,7 @@ def map_sensors_by_stats(year):
 	map_osm.add_child(feat_group3)
 	map_osm.add_child(folium.LayerControl())
 	map_osm.save("map_sensors_by_stats_"+year+".html")
-
+	cur.close()
 	conn.close()
 
 '''
@@ -264,6 +266,9 @@ def AverageDayMap(year,numberWeek , dayNumber):
 		
 		listValues.append(i)
 
+	cur.close()
+	conn.close()
+	
 	item=sensor_dict[id_arc]
 	valueItem = getAveragePonderate(listValues)
 	list_Item_AverageValues.append((id_arc,item,valueItem))
@@ -288,18 +293,19 @@ def map_sensor_with_all_data():
 	strQuery = sensor_with_all_data_AllYears()
 	cur.execute(strQuery)
 	make_map_from_request(cur,'map_sensor_with_all_data.html',1)
+	cur.close()
 	conn.close()
 
 '''
 create an html file of the correct and less corred sensors predicted by ta model
 '''
-def mapDifferences(x,y,predictedY):
+def mapDifferences(name,x,y,predictedY):
 	from collections import defaultdict
 	dicoFrequencyGoodAndFalse = defaultdict(lambda :(0,0))
 
 	index=0
 	cmp=0
-	for i in tqdm(x,desc='mapDifferences 1/2'):
+	for i in tqdm(x,desc=name+'mapDifferences 1/2'):
 		nbSensor = i[index]
 		lastTuple =dicoFrequencyGoodAndFalse[nbSensor]
 		if(y[cmp]==predictedY[cmp]):
@@ -319,7 +325,7 @@ def mapDifferences(x,y,predictedY):
 	feat_group4 =  folium.FeatureGroup(name="Sensor with less than 40% of good predictions")
 	cmp=0
 
-	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc='mapDifferences 2/2'):
+	for id,tupleValues in tqdm(dicoFrequencyGoodAndFalse.items(),desc=name+'mapDifferences 2/2'):
 		item=sensor_dict[id]
 
 		nbGoodValues = float(tupleValues[0]/(tupleValues[0]+tupleValues[1]))
@@ -343,7 +349,7 @@ def mapDifferences(x,y,predictedY):
 	map_osm.add_child(feat_group3)
 	map_osm.add_child(feat_group4)
 	map_osm.add_child(folium.LayerControl())
-	map_osm.save('DecisionTreeDifference.html')
+	map_osm.save(name+'.html')
 
 #AverageDayMap(2013,2,4)
 #Kmeans_Of_sensor_with_all_data_AllYears()

@@ -18,6 +18,7 @@ def delete_Null():
 	cur = conn.cursor()
 	cur.execute('DELETE FROM test WHERE taux_occ is NULL OR debit is NULL ')
 	conn.commit()
+	cur.close()
 	conn.close()
 
 def showNotNovemnber():
@@ -30,6 +31,7 @@ def showNotNovemnber():
 			if(i[3]>43 and i[3]<49):
 				print(i)
 	print('finish')
+	cur.close()
 	conn.close()
 
 def showNovemnber():
@@ -41,6 +43,7 @@ def showNovemnber():
 		if(i[3]<44 or i[3]>48):
 			print(i)
 	print('finish')
+	cur.close()
 	conn.close()
 
 def calcul_correlation():
@@ -53,6 +56,7 @@ def calcul_correlation():
 		taux_occ.append(i[2])
 		debit.append(i[3])
 	print(np.corrcoef(debit,taux_occ)[0][1])
+	cur.close()
 	conn.close()
 
 
@@ -141,6 +145,7 @@ def make_average_by_year():
 		for j in tqdm(cur.fetchall()):
 			file.write(str(j)+"\n")
 		year+=1
+	cur.close()
 	conn.close()
 
 #make_average_by_year()

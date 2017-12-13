@@ -26,7 +26,13 @@ def computeProba(p , actualYear, startYear,endYear):
 	proba = p/div
 	return  proba
 
-
+'''
+return a list of values from the cur ( query request)
+with the p probability amortized by the interval of years (find with  computeProba)
+if startYear = 2013
+endYear = 2017
+p= 0.5
+'''
 import random
 def getRandomizedListeFromBd(cur,p,startYear,endYear):
 
@@ -41,7 +47,7 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 	for i in range(startYear,endYear+1):
 		actualProba = computeProba(p,i,startYear,endYear)
 		listOfProba.append(actualProba)
-		print('proba '+str(i)+' '+str(actualProba))
+		print('proba '+str(i-startYear)+' '+str(actualProba))
 
 	endedWithBreak=False
 	for i in tqdm(cur.fetchall() , desc='getRandomizedListeFromBd'):
@@ -75,16 +81,17 @@ def getRandomizedListeFromBd(cur,p,startYear,endYear):
 return a list who each part is a list of values of a year
 years are in order of time
 '''
-def getLisOfList_All_BD(strQuery,p,startYear,endYear):
+def getLisOf_All_BD(strQuery,p,startYear,endYear):
 	
 	conn = sql.connect(dataBaseName)
 	cur = conn.cursor()
 	cur.execute(strQuery)
 
-	listOfList = getRandomizedListeFromBd(cur,p ,startYear,endYear )
+	lisOf_All_BD = getRandomizedListeFromBd(cur,p ,startYear,endYear )
+	cur.close()
 	conn.close()
-
-	return listOfList
+	
+	return lisOf_All_BD
 
 '''
 print size of Set of Train and Test
@@ -118,38 +125,45 @@ def getY(X):
 		y.append(getColor(value))
 	return y
 
-def get_train_test_sets(startYear,endYear,proba=0.5,pourcent=0.33):
+def getListOfDataFromQuery(query,p=0.5,name='query'):
+	conn = sql.connect(dataBaseName)
+	cur = conn.cursor()
+	cur.execute(strQuery)
+
+	listOfData= []
+	for i in tqdm(cur.fetchall() , desc=name):
+		if(random.uniform(0, 1)<p):
+			listOfData.append(i)
 	
-	strQuery = sensor_with_all_data_AllYearsNot_NULL()
-	X=getLisOfList_All_BD(strQuery,proba, startYear,endYear)
+	cur.close()
+	conn.close()
+	return listOfData
 
-	#flat_X=sum(X, []) no more necesary
-	flat_X=X
+def get_train_test_sets(strQuery ,startYear,endYear,proba=0.5,pourcent=0.33):
+	X=getLisOf_All_BD(strQuery,proba, startYear,endYear)
 
-	print('size SET -> '+str(len(flat_X)))
-
-	#print('size SET -> '+str(len(X[0])))
+	print('size SET -> '+str(len(X)))
 	
-	y=getY(flat_X)
-
+	y=getY(X)
 	print("clusters finded")
-	#remove index BD  , debit , taux_occ
-	flat_X = [x[1:-2] for x in flat_X]
 
-	
-	return train_test_split(flat_X, y, test_size=pourcent)
+	#remove index BD  , debit , taux_occ
+	X = [x[1:-2] for x in X]
+	return train_test_split(X, y, test_size=pourcent)
 
 from mapPrinter import *
-
 def trainDecisionTree(X_train, X_test, y_train, y_test):
 	clf = DecisionTreeClassifier(criterion = "gini", random_state = 100, max_depth=7, min_samples_leaf=5)
+	print("start decision")
 	clf = clf.fit(X_train, y_train);
 	score = clf.score(X_test, y_test);
 	print(score)
+	'''
 	getTreeGraphizc(clf)
-
 	yPredicted = clf.predict(X_test)
-	mapDifferences(X_test,y_test , yPredicted)
+	mapDifferences('treeDecision'X_test,y_test , yPredicted)
+	'''
+	return clf
 
 '''
 create a TreeGraphizc.dot file
@@ -162,16 +176,24 @@ def getTreeGraphizc(clf):
                          filled=True, rounded=True,  
                          special_characters=True) 
 	#graph = graphviz.Source(dot_data)  
-	
 
-'''
-flat_X = [(3,4,10,20),(3,4,10,20),(3,4,10,20)]
-flat_X = [x[1:-2] for x in flat_X] 
-print(flat_X)
-'''
 
-X_train, X_test, y_train, y_test=get_train_test_sets(2013,2017,1)
-#printSets(X_train, X_test, y_train, y_test)
+def testTreeOnNovembre2017(clf):
+	strQuery = sensor_with_all_data_Not_NULL_Nov2017()
+	x_listNovember2017 = getListOfDataFromQuery(strQuery,0.5,'november 2017')
 
-trainDecisionTree(X_train, X_test, y_train, y_test)
+	y_listNovember2017=getY(x_listNovember2017)
+	x_listNovember2017 = [x[1:-2] for x in x_listNovember2017]
 
+	yPredicted = clf.predict(x_listNovember2017)
+	mapDifferences('november',x_listNovember2017,y_listNovember2017 , yPredicted)
+
+
+
+#strQuery = sensor_with_all_data_AllYearsNot_NULL()
+strQuery = sensor_with_all_data_AllYearsNot_NULL_notNov2017()
+X_train, X_test, y_train, y_test=get_train_test_sets(strQuery ,2017,2017,0.7)
+
+clf = trainDecisionTree(X_train, X_test, y_train, y_test)
+
+testTreeOnNovembre2017(clf)
