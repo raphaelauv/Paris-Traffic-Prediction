@@ -1,6 +1,8 @@
 from comprehension_DS import *
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import multiprocessing
 
 from sklearn.datasets import load_iris
 from sklearn import tree
@@ -224,10 +226,22 @@ def testTreeOnNovembre2017(clf):
 Create decision tree fit with all data without month of novemeber of 2017
 and call the function testTreeOnNovembre2017()
 '''
-def analysePredictionNovember():
+def analysePredictionNovember(modeRandom=True):
 	strQuery = sensor_with_all_data_AllYearsNot_NULL_notNov2017()
-	X_train, X_test, y_train, y_test=get_train_test_sets(strQuery ,2017,2017,0.7)
-	clf = trainDecisionTree(X_train, X_test, y_train, y_test)
+	X_train, X_test, y_train, y_test=get_train_test_sets(strQuery ,2016,2017,0.75)
+
+	if(modeRandom):
+		number_dim=5
+		clf = RandomForestClassifier(n_estimators = 10,criterion = "gini", max_features = number_dim,n_jobs=multiprocessing.cpu_count(),max_depth=20,verbose=True)
+		clf = clf.fit(X_train, y_train);
+		score = clf.score(X_test, y_test);
+		print(score)
+		#yPredicted = clf.predict(X_test)
+		#mapDifferences(X_test,y_test , yPredicted)
+
+	else:
+		clf = trainDecisionTree(X_train, X_test, y_train, y_test)
+
 	testTreeOnNovembre2017(clf)
 
 #strQuery = sensor_with_all_data_AllYearsNot_NULL()
