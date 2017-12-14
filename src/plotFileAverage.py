@@ -46,4 +46,3 @@ if(len(sys.argv)>1):
 	fileName = 'data/average_'+str(sys.argv[1])+'.txt'
 
 plotFile(fileName)
-
