@@ -1,5 +1,13 @@
 # Paris road traffic Prediction
 
+
+<a href="https://vimeo.com/219726521" target="_blank"><img src="https://github.com/raphaelauv/Paris-Traffic-Prediction/blob/master/doc/resume.gif" alt="alt text" width="300" height="whatever"></a>
+
+Full video : https://vimeo.com/248162106
+
+<img src="https://raw.githubusercontent.com/raphaelauv/Paris-Traffic-Prediction/master/doc/images/predictions.png" alt="alt text" width="400" height="whatever">
+
+
 ## Mandarina Project
 
 ### To parse and store to SQLite database
