@@ -1,8 +1,6 @@
-# Fouille Mandarina Project
+# Paris road traffic Prediction
 
-Auvert Raphael - Andres Quiroz
-
-## Paris road traffic modelisation
+## Mandarina Project
 
 ### To parse and store to SQLite database
 
